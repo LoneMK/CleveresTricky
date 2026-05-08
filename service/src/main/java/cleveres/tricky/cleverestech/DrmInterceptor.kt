@@ -60,7 +60,7 @@ object DrmInterceptor : BinderInterceptor() {
     )
 
     // All known DRM process names to find PID for injection
-    private val DRM_PROCESS_NAMES = listOf(
+    private val DRM_PROCESS_NAMES = setOf(
         // AIDL service (Android 13+)
         "android.hardware.drm-service.widevine",
         "android.hardware.drm-service.clearkey",
@@ -210,10 +210,8 @@ object DrmInterceptor : BinderInterceptor() {
                     end++
                 }
                 val argv0 = String(buf, 0, end)
-                for (target in DRM_PROCESS_NAMES) {
-                    if (argv0 == target || argv0.endsWith("/$target")) {
-                        return cachedPid
-                    }
+                if (DRM_PROCESS_NAMES.contains(argv0.substringAfterLast('/'))) {
+                    return cachedPid
                 }
             }
             cachedDrmPid = null
@@ -241,12 +239,10 @@ object DrmInterceptor : BinderInterceptor() {
                         end++
                     }
                     val argv0 = String(buf, 0, end)
-                    for (target in DRM_PROCESS_NAMES) {
-                        if (argv0 == target || argv0.endsWith("/$target")) {
-                            val parsedPid = pidStr.toInt()
-                            Logger.d("DRM: Found DRM process '$argv0' at PID $parsedPid")
-                            return@runCatching parsedPid
-                        }
+                    if (DRM_PROCESS_NAMES.contains(argv0.substringAfterLast('/'))) {
+                        val parsedPid = pidStr.toInt()
+                        Logger.d("DRM: Found DRM process '$argv0' at PID $parsedPid")
+                        return@runCatching parsedPid
                     }
                 }
                 null
