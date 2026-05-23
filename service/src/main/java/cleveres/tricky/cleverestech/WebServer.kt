@@ -1273,7 +1273,7 @@ class WebServer(
         @keyframes spin { to { transform: rotate(360deg); } }
         h1 { text-align: center; font-weight: 200; letter-spacing: 2px; margin: 25px 0; color: var(--accent); font-size: 1.5em; text-transform: uppercase; }
         .tabs { display: flex; justify-content: center; border-bottom: 1px solid var(--border); background: var(--panel); overflow-x: auto; position: sticky; top: 0; z-index: 100; }
-        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; }
+        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; }
         .tab:hover { opacity: 0.9; }
         .tab.active { border-bottom-color: var(--accent); opacity: 1; color: var(--accent); }
         .content { display: none; padding: 20px; max-width: 800px; margin: 0 auto; padding-bottom: 80px; }
@@ -1426,7 +1426,7 @@ class WebServer(
             </div>
         </div>
         <div class="panel"><h3>Configuration Management</h3><div style="margin-bottom:10px;"><label for="backupPw">Encryption Password (optional - leave blank for unencrypted export)</label><div class="pwd-wrapper"><input type="password" id="backupPw" placeholder="Leave blank to skip encryption" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off"><button type="button" class="pwd-toggle" onclick="togglePassword(this)">Show</button></div></div><div class="grid-2"><button onclick="runWithState(this, 'Exporting...', backupConfig)">Export Settings</button><button onclick="document.getElementById('restoreInput').click()">Import Settings</button><input type="file" id="restoreInput" style="display:none" onchange="restoreConfig(this)" accept=".zip,.ctsb"></div><div style="margin-top:10px;"><button onclick="const btn = this; requireConfirm(btn, () => runWithState(btn, 'Resetting...', resetEnvironment), 'Confirm Reset')" class="danger" style="width:100%;">One-Click Reset (Refresh Environment)</button></div></div>
-        <div class="panel" style="text-align:center;"><h3>Community</h3><div id="communityCount" style="font-size:2em; font-weight:300; margin: 10px 0;">...</div><div id="bannedCount" style="font-size:0.9em; color:#888; margin-bottom:10px;">Global Banned Keys: ...</div><a href="https://t.me/cleverestech" target="_blank" style="display:inline-block; margin-top:10px; color:var(--accent); text-decoration:none; font-size:0.9em; border:1px solid var(--border); padding:5px 15px; border-radius:15px;">Join Channel</a></div>
+        <div class="panel" style="text-align:center;"><h3>Community</h3><div id="communityCount" style="font-size:2em; font-weight:300; margin: 10px 0;">...</div><div id="bannedCount" style="font-size:0.9em; color:#888; margin-bottom:10px;">Global Banned Keys: ...</div><a href="https://t.me/cleverestech" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; box-sizing:border-box; margin-top:10px; color:var(--accent); text-decoration:none; font-size:0.9em; border:1px solid var(--border); padding:5px 15px; border-radius:15px;">Join Channel</a></div>
     </div>
 
     <div id="spoof" class="content" role="tabpanel" aria-labelledby="tab_spoof">
@@ -1659,8 +1659,8 @@ class WebServer(
             <h3>Platforms</h3>
             <div style="display:flex; flex-direction:column; gap:12px;">
                 <div class="row"><span style="font-weight:bold;">Binance User ID</span><span style="font-family:monospace;">114574830 <button onclick="copyToClipboard('114574830','Copied Binance ID',this)" style="padding:8px 16px; font-size:0.85em; margin-left:5px; min-height:44px;">Copy</button></span></div>
-                <div class="row"><span style="font-weight:bold;">PayPal</span><a href="https://www.paypal.me/tryigitx" target="_blank" style="color:var(--accent); text-decoration:none;">paypal.me/tryigitx</a></div>
-                <div class="row"><span style="font-weight:bold;">BuyMeACoffee</span><a href="https://buymeacoffee.com/yigitx" target="_blank" style="color:var(--accent); text-decoration:none;">buymeacoffee.com/yigitx</a></div>
+                <div class="row"><span style="font-weight:bold;">PayPal</span><a href="https://www.paypal.me/tryigitx" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; color:var(--accent); text-decoration:none;">paypal.me/tryigitx</a></div>
+                <div class="row"><span style="font-weight:bold;">BuyMeACoffee</span><a href="https://buymeacoffee.com/yigitx" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; color:var(--accent); text-decoration:none;">buymeacoffee.com/yigitx</a></div>
             </div>
         </div>
         <div class="panel" style="text-align:center;">
@@ -3087,7 +3087,7 @@ class WebServer(
             devFooter.style.backgroundColor = "var(--panel-bg)";
             devFooter.style.borderRadius = "var(--radius)";
             devFooter.style.border = "1px solid var(--accent)";
-            devFooter.innerHTML = `<span style="color:var(--accent); font-weight:bold;">BETA / DEV BUILD</span><br><br>This module is currently a development build. For the stable version, please download the <a href="https://github.com/tryigit/CleveresTricky/releases" style="color:var(--accent);" target="_blank">Stable Build (GitHub Releases)</a>.`;
+            devFooter.innerHTML = `<span style="color:var(--accent); font-weight:bold;">BETA / DEV BUILD</span><br><br>This module is currently a development build. For the stable version, please download the <a href="https://github.com/tryigit/CleveresTricky/releases" style="display:inline-flex; align-items:center; justify-content:center; min-height:44px; min-width:44px; color:var(--accent);" target="_blank">Stable Build (GitHub Releases)</a>.`;
             document.body.appendChild(devFooter);
         }
     </script>
