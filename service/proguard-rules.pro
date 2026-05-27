@@ -26,7 +26,7 @@
 -keep class org.bouncycastle.jce.provider.** { *; }
 -dontwarn javax.naming.**
 
-# Network client java.net.http API on older Android
+# Prevent compilation failure on older SDKs
 -dontwarn java.net.http.**
 
 # Aggressive Obfuscation
