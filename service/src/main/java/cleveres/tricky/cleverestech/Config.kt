@@ -109,8 +109,9 @@ object Config {
 
         val pkgs = getPackages(uid)
         var result: AppSpoofConfig? = null
-        for (pkg in pkgs) {
-            val config = state.configs.get(pkg)
+        val len = pkgs.size
+        for (i in 0 until len) {
+            val config = state.configs.get(pkgs[i])
             if (config != null) {
                 result = config
                 break
@@ -641,8 +642,9 @@ object Config {
                 // Use cached getPackages to avoid expensive IPC call
                 val pkgs = getPackages(callingUid)
                 var f: Any? = null
-                for (pkg in pkgs) {
-                    f = patches[pkg]
+                val len = pkgs.size
+                for (i in 0 until len) {
+                    f = patches[pkgs[i]]
                     if (f != null) break
                 }
                 f ?: state.defaultPatch
