@@ -45,7 +45,7 @@ class ReproFalsePositiveTest {
 
         // 1. Check that the Decimal interpretation is present (Correct behavior)
         val decimalVal = BigInteger(ambiguousStr)
-        val decimalHex = decimalVal.toString(16).lowercase()
+        val decimalHex = decimalVal.toString(16)
         // verify revokedSerials contains decimalHex
 
         // 2. Check that the Hex interpretation is NOT present (The Bug/Fix)

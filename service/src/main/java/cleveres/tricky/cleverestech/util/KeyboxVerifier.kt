@@ -323,7 +323,7 @@ object KeyboxVerifier {
                 if (status == Status.REVOKED) {
                     val chain = kb.certificates()
                     val sn = if (chain.isNotEmpty() && chain[0] is X509Certificate) {
-                         (chain[0] as X509Certificate).serialNumber.toString(16).lowercase()
+                         (chain[0] as X509Certificate).serialNumber.toString(16)
                     } else "unknown"
                     return Result(file, file.name, Status.REVOKED, "Certificate with SN $sn is revoked")
                 } else if (status == Status.INVALID) {
@@ -355,7 +355,7 @@ object KeyboxVerifier {
     @JvmStatic
     fun isRevoked(cert: X509Certificate, revokedSerials: Set<String>): Boolean {
         // 1. Serial Number (Hex)
-        val sn = cert.serialNumber.toString(16).lowercase()
+        val sn = cert.serialNumber.toString(16)
         if (revokedSerials.contains(sn)) return true
 
         // 2. Key ID Checks (Hash of Public Key)
