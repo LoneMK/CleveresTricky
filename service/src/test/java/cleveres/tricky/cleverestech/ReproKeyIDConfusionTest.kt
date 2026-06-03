@@ -33,7 +33,7 @@ class ReproKeyIDConfusionTest {
         assertTrue("Should contain '$ambiguousKey' (Hex literal) (Security Fix)", revoked.contains(ambiguousKey))
 
         // We DO expect the Decimal interpretation (ambiguity handling).
-        val decimalInterpretation = java.math.BigInteger(ambiguousKey).toString(16).lowercase()
+        val decimalInterpretation = java.math.BigInteger(ambiguousKey).toString(16)
         assertTrue("Should contain '$decimalInterpretation' (Decimal interpretation)", revoked.contains(decimalInterpretation))
     }
 }

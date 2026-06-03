@@ -16,11 +16,11 @@ class KeyboxVerifierLargeSerialTest {
         val decimalSerial = "1234567890123456789012345"
 
         // Correct Hex representation
-        val expectedHex = BigInteger(decimalSerial).toString(16).lowercase()
+        val expectedHex = BigInteger(decimalSerial).toString(16)
         // 105d4ac1d3f232b78129
 
         // If bug exists, it parses as Hex literal
-        val wrongHex = BigInteger(decimalSerial, 16).toString(16).lowercase()
+        val wrongHex = BigInteger(decimalSerial, 16).toString(16)
         // 1234567890123456789012345
 
         val json = """

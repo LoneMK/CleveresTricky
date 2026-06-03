@@ -27,17 +27,90 @@ import java.util.zip.ZipOutputStream
 import org.json.JSONArray
 import org.json.JSONObject
 
-private val WHITESPACE_REGEX = Regex("\\s+")
-private val WHITESPACE_FIND_REGEX = Regex("\\s")
-private val PKG_NAME_REGEX = Regex("^[a-zA-Z0-9_.*]+$")
-private val TEMPLATE_NAME_REGEX = Regex("^[a-zA-Z0-9_-]+$")
-private val KEYBOX_FILENAME_REGEX = Regex("^[a-zA-Z0-9_.-]+$")
-private val KEY_VALUE_REGEX = Regex("^[a-zA-Z0-9_.]+=.+$")
 private val SAFE_BUILD_VAR_VALUE_REGEX = Regex("^[a-zA-Z0-9_\\-\\.\\s/:,+=()@]*$")
-private val TARGET_PKG_REGEX = Regex("^[a-zA-Z0-9_.*!]+$")
-private val SECURITY_PATCH_REGEX = Regex("^[a-zA-Z0-9_=-]+$")
-private val FILENAME_REGEX = Regex("^[a-zA-Z0-9._-]+$")
-private val PERMISSIONS_REGEX = Regex("^[a-zA-Z0-9_.,]+$")
+
+private fun isValidPkgName(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '.' || c == '*')) return false
+    }
+    return true
+}
+
+private fun isValidTemplateName(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '-')) return false
+    }
+    return true
+}
+
+private fun isValidKeyboxFilename(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '.' || c == '-')) return false
+    }
+    return true
+}
+
+private fun isValidKeyValue(s: String): Boolean {
+    if (s.isEmpty()) return false
+    val eqIdx = s.indexOf('=')
+    if (eqIdx <= 0 || eqIdx == s.length - 1) return false
+    for (i in 0 until eqIdx) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '.')) return false
+    }
+    return true
+}
+
+private fun isValidSafeBuildVarValue(s: String): Boolean {
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '-' || c == '.' || c.isWhitespace() || c == '/' || c == ':' || c == ',' || c == '+' || c == '=' || c == '(' || c == ')' || c == '@')) return false
+    }
+    return true
+}
+
+private fun isValidTargetPkg(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '.' || c == '*' || c == '!')) return false
+    }
+    return true
+}
+
+private fun isValidSecurityPatch(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '=' || c == '-')) return false
+    }
+    return true
+}
+
+private fun isValidFilename(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '.' || c == '_' || c == '-')) return false
+    }
+    return true
+}
+
+private fun isValidPermissions(s: String): Boolean {
+    if (s.isEmpty()) return false
+    for (i in 0 until s.length) {
+        val c = s[i]
+        if (!(c in 'a'..'z' || c in 'A'..'Z' || c in '0'..'9' || c == '_' || c == '.' || c == ',')) return false
+    }
+    return true
+}
+
 private val TELEGRAM_COUNT_PATTERN = java.util.regex.Pattern.compile("tgme_page_extra\">([0-9 ]+) members")
 private const val WEB_UI_READINESS_TIMEOUT_MS = 15_000L
 private const val WEB_UI_READINESS_POLL_MS = 100L
@@ -819,7 +892,7 @@ class WebServer(
                          if (tmpl != "null" && !isValidTemplate(tmpl)) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid input")
                          if (kb != "null" && !isValidKeybox(kb)) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid input")
                          if (permsStr != "null" && !isValidPermissions(permsStr)) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid input")
-                         if (pkg.contains(WHITESPACE_FIND_REGEX)) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid input")
+                         if (pkg.any { it.isWhitespace() }) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid input")
                          sb.append("$pkg $tmpl $kb $permsStr\n")
                      }
                      synchronized(fileLock) {
@@ -906,7 +979,7 @@ class WebServer(
              }
 
              // Legacy XML upload
-             if (filename != null && content != null && filename.endsWith(".xml") && filename.matches(FILENAME_REGEX)) {
+             if (filename != null && content != null && filename.endsWith(".xml") && isValidFilename(filename)) {
                  synchronized(fileLock) {
                      try {
                          val keyboxes = CertHack.parseKeyboxXml(StringReader(content), filename)
@@ -3170,31 +3243,31 @@ class WebServer(
         }
 
         fun isValidFilename(name: String): Boolean {
-            return name.matches(FILENAME_REGEX) && !name.contains("..") && !name.contains("/") && !name.contains("\\")
+            return cleveres.tricky.cleverestech.isValidFilename(name) && !name.contains("..") && !name.contains("/") && !name.contains("\\")
         }
 
         fun validateContent(filename: String, content: String): Boolean {
             // Basic validation based on known file types
             if (filename == "target.txt") {
                 val lines = content.lineSequence()
-                return lines.all { it.isEmpty() || it.startsWith("#") || it.matches(TARGET_PKG_REGEX) }
+                return lines.all { it.isEmpty() || it.startsWith("#") || isValidTargetPkg(it) }
             }
             if (filename == "security_patch.txt") {
                  val lines = content.lineSequence()
-                 return lines.all { it.isEmpty() || it.matches(SECURITY_PATCH_REGEX) }
+                 return lines.all { it.isEmpty() || isValidSecurityPatch(it) }
             }
             if (filename == "spoof_build_vars") {
                 val lines = content.lineSequence()
                 return lines.all { line ->
                     if (line.isEmpty() || line.startsWith("#")) return@all true
                     // Must be KEY=VALUE format
-                    if (!line.matches(KEY_VALUE_REGEX)) return@all false
+                    if (!isValidKeyValue(line)) return@all false
                     // Value part security check
                     val idx = line.indexOf('=')
                     if (idx == -1) return@all false
                     val value = line.substring(idx + 1)
                     // Check for unsafe shell chars
-                    value.matches(SAFE_BUILD_VAR_VALUE_REGEX)
+                    isValidSafeBuildVarValue(value)
                 }
             }
             if (filename == "app_config") {

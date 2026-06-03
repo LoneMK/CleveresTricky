@@ -13,7 +13,7 @@ class KeyboxVerifierBugTest {
         // We prioritize Decimal Serial (more common for variable length), so this should be parsed as Decimal.
 
         val targetStr = "10000000000000000000000000000001"
-        val expectedHex = java.math.BigInteger(targetStr).toString(16).lowercase()
+        val expectedHex = java.math.BigInteger(targetStr).toString(16)
         val json = """
         {
           "entries": {
