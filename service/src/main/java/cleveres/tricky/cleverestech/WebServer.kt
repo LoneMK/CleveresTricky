@@ -1419,7 +1419,7 @@ class WebServer(
 
 
         .autocomplete-items { position: absolute; border: 1px solid var(--border); border-bottom: none; border-top: none; z-index: 99; top: 100%; left: 0; right: 0; max-height: 200px; overflow-y: auto; background-color: var(--panel); border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
-        .autocomplete-items div { padding: 10px; cursor: pointer; background-color: var(--panel); border-bottom: 1px solid var(--border); color: var(--fg); font-size: 0.9em; }
+        .autocomplete-items div { padding: 10px; cursor: pointer; background-color: var(--panel); border-bottom: 1px solid var(--border); color: var(--fg); font-size: 0.9em; min-height: 44px; display: flex; align-items: center; }
         .autocomplete-items div:hover { background-color: #333; }
         .autocomplete-active { background-color: var(--accent) !important; color: #000 !important; }
 
