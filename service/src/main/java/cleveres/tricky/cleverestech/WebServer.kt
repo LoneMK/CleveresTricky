@@ -1710,7 +1710,7 @@ class WebServer(
             </ul>
         </div>
         <div class="panel">
-            <h3>Language & Customization</h3>
+            <h3>Language Support</h3>
             <p>The module is English-first, but fully supports community translations.</p>
             <p>To add a language, download the template below, translate the values, and place the resulting <code>lang.json</code> file in <code>/data/adb/cleverestricky/</code>. Then click Reload.</p>
             <div class="grid-2">
