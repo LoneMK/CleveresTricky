@@ -101,7 +101,11 @@ fun main(args: Array<String>) {
             }
             val telJob = launch(Dispatchers.IO) {
                 try {
-                    telSuccess = TelephonyInterceptor.tryRunTelephonyInterceptor()
+                    if (Config.isTelephonyEnabled) {
+                        telSuccess = TelephonyInterceptor.tryRunTelephonyInterceptor()
+                    } else {
+                        telSuccess = true // Bypass if disabled
+                    }
                 } catch (e: Exception) {
                     Logger.e("Telephony interceptor threw unexpected exception", e)
                 }
@@ -134,7 +138,7 @@ fun main(args: Array<String>) {
             while (true) {
                 val telRetryJob = launch(Dispatchers.IO) {
                     try {
-                        if (!TelephonyInterceptor.tryRunTelephonyInterceptor()) {
+                        if (Config.isTelephonyEnabled && !TelephonyInterceptor.tryRunTelephonyInterceptor()) {
                             Logger.d("Retrying Telephony Interceptor injection...")
                         }
                     } catch (e: Exception) {
