@@ -4,4 +4,4 @@ version=${versionName}
 versionCode=${versionCode}
 author=${author}
 description=${description}
-updateJson=https://raw.githubusercontent.com/tryigitx/CleveresTricky/master/update.json
+updateJson=https://raw.githubusercontent.com/tryigit/CleveresTricky/master/update.json

@@ -127,6 +127,10 @@ public final class CertHack {
     static {
         rotationCounters.put(KeyProperties.KEY_ALGORITHM_EC, new AtomicInteger(0));
         rotationCounters.put(KeyProperties.KEY_ALGORITHM_RSA, new AtomicInteger(0));
+        // Register BouncyCastle once at class init to avoid race conditions
+        // when multiple threads concurrently call removeProvider/addProvider.
+        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
+        Security.addProvider(new BouncyCastleProvider());
         try {
             certificateFactory = CertificateFactory.getInstance("X.509");
         } catch (Throwable t) {
@@ -417,6 +421,12 @@ public final class CertHack {
             ContentSigner signer;
 
             String leafAlgo = leaf.getPublicKey().getAlgorithm();
+            // Normalize algorithm name: JCA may return "ECDSA" instead of "EC"
+            if ("ECDSA".equalsIgnoreCase(leafAlgo) || "EC".equalsIgnoreCase(leafAlgo)) {
+                leafAlgo = KeyProperties.KEY_ALGORITHM_EC;
+            } else {
+                leafAlgo = KeyProperties.KEY_ALGORITHM_RSA;
+            }
 
             // App-specific keybox selection
             List<KeyBox> list = null;
@@ -463,9 +473,9 @@ public final class CertHack {
             }
             byte[] verifiedBootHash = null;
             try {
-                if (!(rootOfTrust instanceof ASN1Sequence r)) {
+                if (rootOfTrust == null || !(rootOfTrust instanceof ASN1Sequence r)) {
                     throw new CertificateParsingException("Expected sequence for root of trust, found "
-                            + rootOfTrust.getClass().getName());
+                            + (rootOfTrust == null ? "null" : rootOfTrust.getClass().getName()));
                 }
                 verifiedBootHash = getByteArrayFromAsn1(r.getObjectAt(3));
             } catch (Throwable t) {
@@ -620,7 +630,12 @@ public final class CertHack {
 
             KeyUsage keyUsage = new KeyUsage(KeyUsage.keyCertSign);
             certBuilder.addExtension(Extension.keyUsage, true, keyUsage);
-            certBuilder.addExtension(createExtension(params, uid));
+            Extension attestExt = createExtension(params, uid);
+            if (attestExt == null) {
+                Logger.e("createExtension returned null for uid=" + uid + " alias=" + descriptor.alias);
+                return null;
+            }
+            certBuilder.addExtension(attestExt);
 
             ContentSigner contentSigner;
             String signingAlgo = rootKP.getPrivate().getAlgorithm();
@@ -642,8 +657,7 @@ public final class CertHack {
     }
 
     private static KeyPair buildECKeyPair(KeyGenParameters params) throws Exception {
-        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
-        Security.addProvider(new BouncyCastleProvider());
+        // Provider already registered in static init — no remove/add needed
 
         String algo = "ECDSA";
         String curveName = params.ecCurveName;
@@ -665,8 +679,7 @@ public final class CertHack {
     }
 
     private static KeyPair buildRSAKeyPair(KeyGenParameters params) throws Exception {
-        Security.removeProvider(BouncyCastleProvider.PROVIDER_NAME);
-        Security.addProvider(new BouncyCastleProvider());
+        // Provider already registered in static init — no remove/add needed
         RSAKeyGenParameterSpec spec = new RSAKeyGenParameterSpec(
                 params.keySize, params.rsaPublicExponent);
         KeyPairGenerator kpg = KeyPairGenerator.getInstance("RSA", BouncyCastleProvider.PROVIDER_NAME);
@@ -686,6 +699,15 @@ public final class CertHack {
         try {
             byte[] key = UtilKt.getBootKey();
             byte[] hash = UtilKt.getBootHash();
+            // Guard against null boot key/hash (BUG 2) — generate random fallback
+            if (key == null) {
+                key = new byte[32];
+                new java.security.SecureRandom().nextBytes(key);
+            }
+            if (hash == null) {
+                hash = new byte[32];
+                new java.security.SecureRandom().nextBytes(hash);
+            }
 
             ASN1Encodable[] rootOfTrustEncodables = {new DEROctetString(key), ASN1Boolean.TRUE,
                     new ASN1Enumerated(0), new DEROctetString(hash)};
@@ -731,12 +753,21 @@ public final class CertHack {
                     bootPatchLevel
             ));
 
-            // Support device properties attestation
+            // Support device properties attestation — guard each field individually
+            // to prevent NPE when only some fields are set (BUG 3)
             if (params.brand != null) {
                 teeEnforcedList.add(new DERTaggedObject(true, 710, new DEROctetString(params.brand)));
+            }
+            if (params.device != null) {
                 teeEnforcedList.add(new DERTaggedObject(true, 711, new DEROctetString(params.device)));
+            }
+            if (params.product != null) {
                 teeEnforcedList.add(new DERTaggedObject(true, 712, new DEROctetString(params.product)));
+            }
+            if (params.manufacturer != null) {
                 teeEnforcedList.add(new DERTaggedObject(true, 716, new DEROctetString(params.manufacturer)));
+            }
+            if (params.model != null) {
                 teeEnforcedList.add(new DERTaggedObject(true, 717, new DEROctetString(params.model)));
             }
 

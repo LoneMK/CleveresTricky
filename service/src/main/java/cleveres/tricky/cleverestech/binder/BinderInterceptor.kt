@@ -137,18 +137,25 @@ open class BinderInterceptor : Binder() {
             }
             else -> return super.onTransact(code, data, reply, flags)
         }
+        if (reply == null) {
+            // FLAG_ONEWAY transactions have no reply parcel — silently skip
+            // to avoid crashing the keystore process with a KotlinNullPointerException.
+            if (result is OverrideReply) result.reply.recycle()
+            if (result is OverrideData) result.data.recycle()
+            return true
+        }
         when (result) {
-            Skip -> reply!!.writeInt(1)
-            Continue -> reply!!.writeInt(2)
+            Skip -> reply.writeInt(1)
+            Continue -> reply.writeInt(2)
             is OverrideReply -> {
-                reply!!.writeInt(3)
+                reply.writeInt(3)
                 reply.writeInt(result.code)
                 reply.writeLong(result.reply.dataSize().toLong())
                 reply.appendFrom(result.reply, 0, result.reply.dataSize())
                 result.reply.recycle()
             }
             is OverrideData -> {
-                reply!!.writeInt(4)
+                reply.writeInt(4)
                 reply.writeLong(result.data.dataSize().toLong())
                 reply.appendFrom(result.data, 0, result.data.dataSize())
                 result.data.recycle()

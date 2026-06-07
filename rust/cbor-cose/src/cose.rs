@@ -32,6 +32,22 @@ const COSE_KEY_EC2_Y: i64 = -3;
 /// P-256 curve identifier.
 const COSE_CRV_P256: i64 = 1;
 
+/// Compute a dynamic patch level in YYYYMMDD format using the 1st of the
+/// current month. This prevents stale hardcoded dates from triggering AOSP
+/// attestation failures when the security patch window expires.
+fn current_patch_level() -> u64 {
+    unsafe {
+        let mut t: libc::time_t = 0;
+        libc::time(&mut t);
+        let mut tm: libc::tm = core::mem::zeroed();
+        libc::gmtime_r(&t, &mut tm);
+        let year = (tm.tm_year + 1900) as u64;
+        let month = (tm.tm_mon + 1) as u64;
+        // Use 1st of current month as the patch date
+        year * 10000 + month * 100 + 1
+    }
+}
+
 /// Build the COSE_Mac0 MAC structure as a CBOR value.
 ///
 /// MAC_structure = [
@@ -236,11 +252,11 @@ pub fn create_device_info_cbor<'a>(
         ),
         (
             CborValue::TextString(Cow::Borrowed("system_patch_level")),
-            CborValue::UnsignedInt(20250205),
+            CborValue::UnsignedInt(current_patch_level()),
         ),
         (
             CborValue::TextString(Cow::Borrowed("vendor_patch_level")),
-            CborValue::UnsignedInt(20250205),
+            CborValue::UnsignedInt(current_patch_level()),
         ),
     ]);
 

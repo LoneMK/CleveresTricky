@@ -181,6 +181,7 @@ object BootLogic {
                 props["vendor.boot.verifiedbootstate"] = "green"
                 props["sys.oem_unlock_allowed"] = "0"
                 props["ro.secureboot.lockstate"] = "locked"
+                props["ro.oem_unlock_supported"] = "0"
 
                 // Realme specific
                 props["ro.boot.realmebootstate"] = "green"

@@ -41,7 +41,7 @@ class RkpInterceptor(
         
         // we cache generated keys so they can be reused in cert requests
         private val keyPairCache = KeyCache<Int, KeyPairInfo>(100)
-        private var keyPairCounter = 0
+        private val keyPairCounter = java.util.concurrent.atomic.AtomicInteger(0)
         
         data class KeyPairInfo(
             val keyPair: KeyPair,
@@ -146,7 +146,7 @@ class RkpInterceptor(
             }
             
             // store handle for later use in cert requests
-            val handleIndex = keyPairCounter++
+            val handleIndex = keyPairCounter.getAndIncrement() and 0x7FFFFFFF
             val privateKeyHandle = ByteArray(32)
             privateKeyHandle[0] = (handleIndex shr 24).toByte()
             privateKeyHandle[1] = (handleIndex shr 16).toByte()
@@ -240,8 +240,12 @@ class RkpInterceptor(
             for (k in keysToSign) {
                 if (k.macedKey == null) continue
                 // KeyCache values() added in previous step
-                val cached = keyPairCache.values().find {
-                    java.util.Arrays.equals(it.macedPublicKey, k.macedKey)
+                val cached = try {
+                    keyPairCache.values().find {
+                        java.util.Arrays.equals(it.macedPublicKey, k.macedKey)
+                    }
+                } catch (_: ConcurrentModificationException) {
+                    null
                 }
                 if (cached?.deviceInfo != null) return cached.deviceInfo
             }
