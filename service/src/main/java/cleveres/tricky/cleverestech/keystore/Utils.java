@@ -17,10 +17,20 @@ import java.util.Iterator;
 
 public class Utils {
     private final static String TAG = "Utils";
+    private static final CertificateFactory certFactoryInstance;
+    static {
+        CertificateFactory cf = null;
+        try {
+            cf = CertificateFactory.getInstance("X.509");
+        } catch (CertificateException e) {
+            Log.e(TAG, "Failed to get X.509 CertificateFactory", e);
+        }
+        certFactoryInstance = cf;
+    }
     static X509Certificate toCertificate(byte[] bytes) {
         try {
-            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            return (X509Certificate) certFactory.generateCertificate(
+            if (certFactoryInstance == null) return null;
+            return (X509Certificate) certFactoryInstance.generateCertificate(
                     new ByteArrayInputStream(bytes));
         } catch (CertificateException e) {
             Log.w(TAG, "Couldn't parse certificate in keystore", e);
@@ -31,8 +41,8 @@ public class Utils {
     @SuppressWarnings("unchecked")
     private static Collection<X509Certificate> toCertificates(byte[] bytes) {
         try {
-            final CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            return (Collection<X509Certificate>) certFactory.generateCertificates(
+            if (certFactoryInstance == null) return new ArrayList<>();
+            return (Collection<X509Certificate>) certFactoryInstance.generateCertificates(
                     new ByteArrayInputStream(bytes));
         } catch (CertificateException e) {
             Log.w(TAG, "Couldn't parse certificates in keystore", e);
@@ -41,7 +51,7 @@ public class Utils {
     }
 
     public static Certificate[] getCertificateChain(KeyEntryResponse response) {
-        if (response == null || response.metadata.certificate == null) return null;
+        if (response == null || response.metadata == null || response.metadata.certificate == null) return null;
         var leaf = toCertificate(response.metadata.certificate);
         if (leaf == null) {
             Log.w(TAG, "Failed to parse leaf certificate from keystore response");

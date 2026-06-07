@@ -73,19 +73,13 @@ object KeyboxAutoCleaner {
             val cmd = arrayOf(
                 "su", "-c", "cmd notification post -S bigtext -t CleveresTricky 'Keybox Revoked Alert' '$count keybox(es) were found to be revoked/invalid and have been disabled. Check WebUI!' -a 'android.intent.action.VIEW' -d '$url'"
             )
-            val process = Runtime.getRuntime().exec(cmd)
-            var stderr = ""
-            val stdout = try {
+            val process = ProcessBuilder(*cmd).redirectErrorStream(true).start()
+            val output = try {
                 process.inputStream.bufferedReader().use { it.readText().trim() }
-            } finally {
-                try { stderr = process.errorStream.bufferedReader().use { it.readText().trim() } } catch (_: Exception) {}
-            }
+            } catch (_: Exception) { "" }
             val exitCode = process.waitFor()
-            if (stdout.isNotBlank()) {
-                Logger.d("AutoCleaner: notification stdout: $stdout")
-            }
-            if (stderr.isNotBlank()) {
-                Logger.d("AutoCleaner: notification stderr: $stderr")
+            if (output.isNotBlank()) {
+                Logger.d("AutoCleaner: notification output: $output")
             }
             if (exitCode != 0) {
                 Logger.e("AutoCleaner: Failed to send notification (exit=$exitCode)")

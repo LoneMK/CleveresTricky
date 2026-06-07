@@ -65,12 +65,12 @@ if [ -c "/dev/qseecom" ] || [ -c "/dev/smd" ]; then
 
     if [ -x "$PROVISION_BIN" ]; then
         log_info "Executing Qualcomm provisioning tool..."
-        CMD="$PROVISION_BIN -b \"$BRAND\" -d \"$DEVICE\" -p \"$PRODUCT\" -s \"$SERIAL\" -m \"$MANUFACTURER\" -M \"$MODEL\""
-        [ -n "$IMEI" ] && CMD="$CMD -i \"$IMEI\""
-        [ -n "$IMEI2" ] && CMD="$CMD -I \"$IMEI2\""
-        [ -n "$MEID" ] && CMD="$CMD -e \"$MEID\""
-        [ -n "$MEID2" ] && CMD="$CMD -E \"$MEID2\""
-        eval "$CMD" > /dev/null 2>&1
+        set -- "$PROVISION_BIN" -b "$BRAND" -d "$DEVICE" -p "$PRODUCT" -s "$SERIAL" -m "$MANUFACTURER" -M "$MODEL"
+        [ -n "$IMEI" ] && set -- "$@" -i "$IMEI"
+        [ -n "$IMEI2" ] && set -- "$@" -I "$IMEI2"
+        [ -n "$MEID" ] && set -- "$@" -e "$MEID"
+        [ -n "$MEID2" ] && set -- "$@" -E "$MEID2"
+        "$@" > /dev/null 2>&1
     else
         log_info "Qualcomm provisioning binary not found, skipping."
     fi
@@ -82,8 +82,7 @@ elif [ -c "/dev/tee0" ] || getprop ro.board.platform | grep -iq "mt"; then
     fi
     if [ -x "$PROVISION_BIN" ]; then
         log_info "Executing MTK provisioning tool..."
-        CMD="$PROVISION_BIN -b \"$BRAND\" -d \"$DEVICE\" -p \"$PRODUCT\" -s \"$SERIAL\" -m \"$MANUFACTURER\" -M \"$MODEL\""
-        eval "$CMD" > /dev/null 2>&1
+        "$PROVISION_BIN" -b "$BRAND" -d "$DEVICE" -p "$PRODUCT" -s "$SERIAL" -m "$MANUFACTURER" -M "$MODEL" > /dev/null 2>&1
     else
         log_info "MTK provisioning binary not found, skipping."
     fi

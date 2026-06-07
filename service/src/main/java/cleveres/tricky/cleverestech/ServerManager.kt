@@ -229,7 +229,28 @@ object ServerManager {
                 return false
             }
 
-            val bytes = conn.inputStream.readBytes()
+            // Cap response size to prevent OOM from malicious servers
+            val maxResponseSize = 10 * 1024 * 1024 // 10MB
+            val contentLength = conn.contentLength
+            if (contentLength > maxResponseSize) {
+                server.lastStatus = "RESPONSE_TOO_LARGE"
+                saveServers()
+                return false
+            }
+            val bytes = conn.inputStream.use { input ->
+                val buffer = java.io.ByteArrayOutputStream(minOf(contentLength.coerceAtLeast(0), 65536))
+                val chunk = ByteArray(8192)
+                var totalRead = 0
+                var n: Int
+                while (input.read(chunk).also { n = it } != -1) {
+                    totalRead += n
+                    if (totalRead > maxResponseSize) {
+                        throw SecurityException("Server response exceeds ${maxResponseSize / 1024 / 1024}MB limit")
+                    }
+                    buffer.write(chunk, 0, n)
+                }
+                buffer.toByteArray()
+            }
 
             // Process Content
             val result = processContent(bytes, server)

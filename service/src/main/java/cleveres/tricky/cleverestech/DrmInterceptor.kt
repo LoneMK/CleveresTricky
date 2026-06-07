@@ -303,22 +303,23 @@ object DrmInterceptor : BinderInterceptor() {
                 Logger.d("DRM: Injecting PID=$pid with $modulePath/libcleverestricky.so")
                 Thread {
                     try {
-                        val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a"
-                        val p = Runtime.getRuntime().exec(
-                            arrayOf(
-                                "$modulePath/lib/$abi/inject",
-                                pid.toString(),
-                                "$modulePath/libcleverestricky.so",
-                                "entry"
-                            )
-                        )
-                        try {
-                            p.inputStream.readBytes()
-                        } catch (_: Exception) {}
-                        finally {
-                            try { p.errorStream.readBytes() } catch (_: Exception) {}
+                        val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                        val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
+                        val p = ProcessBuilder(
+                            "$modulePath/lib/$abi/inject",
+                            pid.toString(),
+                            "$modulePath/libcleverestricky.so",
+                            "entry"
+                        ).redirectOutput(java.io.File("/dev/null"))
+                         .redirectError(java.io.File("/dev/null"))
+                         .start()
+                        val completed = p.waitFor(30, java.util.concurrent.TimeUnit.SECONDS)
+                        if (!completed) {
+                            Logger.e("DRM: Injection timed out after 30s, killing process")
+                            p.destroyForcibly()
+                            return@Thread
                         }
-                        val exitCode = p.waitFor()
+                        val exitCode = p.exitValue()
                         if (exitCode != 0) {
                             Logger.e("DRM: Injection failed (exit=$exitCode)")
                         } else {

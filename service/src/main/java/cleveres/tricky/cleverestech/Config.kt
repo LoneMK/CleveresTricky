@@ -612,7 +612,7 @@ object Config {
             moduleHashFromVars = null
         }
 
-        Logger.i { "update build vars: $buildVars, attestation ids: ${attestationIds.keys}" }
+        Logger.i { "update build vars (keys): ${buildVars.keys}, attestation ids: ${attestationIds.keys}" }
     }.onFailure {
         Logger.e("failed to update build vars", it)
     }
@@ -850,11 +850,15 @@ object Config {
 
     private fun applyProfileFromFile(f: File?) = runCatching {
         if (f == null || !f.exists()) return@runCatching
-        val profileName = f.readText().trim()
+        // Fix File Deletion Race (S10) by atomically renaming before processing
+        val tmp = File(f.parentFile, f.name + ".processing")
+        if (!f.renameTo(tmp)) return@runCatching
+        
+        val profileName = tmp.readText().trim()
         if (profileName.isNotEmpty()) {
             applyProfile(profileName)
         }
-        f.delete() // One-shot trigger
+        tmp.delete()
     }.onFailure {
         Logger.e("failed to apply profile from file", it)
     }
@@ -925,7 +929,9 @@ object Config {
             val dirs = listOf("/data/vendor/mediadrm", "/data/mediadrm")
             dirs.forEach { path ->
                 try {
-                    File(path).walkBottomUp().forEach { if (it.path != path) it.delete() }
+                    // Fix Destructive FS Operation (S9): Use deleteRecursively which correctly prevents 
+                    // symlink traversal deletion, unlike manual walkBottomUp.
+                    File(path).listFiles()?.forEach { it.deleteRecursively() }
                 } catch(e: Exception) {
                     Logger.e("Failed to clear DRM data on boot: $path", e)
                 }

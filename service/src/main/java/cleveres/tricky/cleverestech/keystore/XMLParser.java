@@ -61,6 +61,10 @@ public class XMLParser {
             // Ignore if feature not supported (though it should be for security)
         }
         try {
+            parser.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            parser.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+        } catch (Exception ignored) {}
+        try {
             parser.setFeature(XmlPullParser.FEATURE_VALIDATION, false);
         } catch (Exception ignored) {}
         parser.setInput(reader);
@@ -169,7 +173,11 @@ public class XMLParser {
                 name = rawTag.substring(0, bracketIndex);
                 int closeBracket = rawTag.indexOf(']', bracketIndex);
                 if (closeBracket != -1) {
-                    index = Integer.parseInt(rawTag.substring(bracketIndex + 1, closeBracket));
+                    try {
+                        index = Integer.parseInt(rawTag.substring(bracketIndex + 1, closeBracket));
+                    } catch (NumberFormatException e) {
+                        index = 0; // Fallback to 0 or could throw a RuntimeException
+                    }
                 }
             } else {
                 name = rawTag;

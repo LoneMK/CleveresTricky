@@ -25,7 +25,7 @@ object TelephonyInterceptor : BinderInterceptor() {
     private val getMeidForSubscriberTransaction = getTransactCode(IPhoneSubInfo.Stub::class.java, "getMeidForSubscriber")
 
     private lateinit var iphonesubinfo: IBinder
-    @Volatile private var triedCount = 0
+    @Volatile private var triedCount = java.util.concurrent.atomic.AtomicInteger(0)
     @Volatile private var injected = false
 
     private val secureRandom = java.security.SecureRandom()
@@ -215,19 +215,20 @@ object TelephonyInterceptor : BinderInterceptor() {
         return "/data/adb/modules/cleverestricky"
     }
 
+
     fun tryRunTelephonyInterceptor(): Boolean {
-        Logger.i("trying to register telephony interceptor ($triedCount) ...")
+        Logger.i("trying to register telephony interceptor (${triedCount.get()}) ...")
 
         val b = ServiceManager.getService("iphonesubinfo")
         if (b == null) {
             Logger.e("iphonesubinfo service not found")
-            triedCount += 1
+            triedCount.incrementAndGet()
             return false
         }
 
         val bd = getBinderBackdoor(b)
         if (bd == null) {
-             if (triedCount >= 3) {
+             if (triedCount.get() >= 3) {
                 Logger.e("Telephony: tried injection but still has no backdoor, skipping")
                 return false
             }
@@ -237,29 +238,34 @@ object TelephonyInterceptor : BinderInterceptor() {
                 val pid = findPhoneProcessPid()
                 if (pid == null) {
                     Logger.e("Telephony: failed to find com.android.phone pid!")
-                    triedCount += 1
+                    triedCount.incrementAndGet()
                     return false
                 }
 
                 val modulePath = getModulePath()
-                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a"
+                val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                 val p = ProcessBuilder(
                     "$modulePath/lib/$abi/inject",
                     pid.toString(),
                     "$modulePath/libcleverestricky.so",
                     "entry"
-                ).redirectErrorStream(true).start()
-                try {
-                    p.inputStream.readBytes()
-                } catch (_: Exception) {}
-                if (p.waitFor() != 0) {
+                ).redirectOutput(java.io.File("/dev/null"))
+                 .redirectError(java.io.File("/dev/null"))
+                 .start()
+                 
+                val completed = p.waitFor(30, java.util.concurrent.TimeUnit.SECONDS)
+                if (!completed) {
+                    Logger.e("Telephony: inject timed out after 30s, killing process")
+                    p.destroyForcibly()
+                } else if (p.exitValue() != 0) {
                     Logger.e("Telephony: failed to inject!")
                 } else {
                     Logger.i("Telephony: injected successfully")
                     injected = true
                 }
             }
-            triedCount += 1
+            triedCount.incrementAndGet()
             return false
         }
 
@@ -269,7 +275,7 @@ object TelephonyInterceptor : BinderInterceptor() {
         iphonesubinfo.linkToDeath({
              Logger.e("iphonesubinfo died! Resetting injection state.")
              injected = false
-             triedCount = 0
+             triedCount.set(0)
         }, 0)
 
         return true

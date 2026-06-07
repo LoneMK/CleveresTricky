@@ -147,6 +147,7 @@ class SecurityLevelInterceptor(
         if (code == generateKeyTransaction && Config.needGenerate(callingUid)) {
             Logger.i("intercept key gen uid=$callingUid pid=$callingPid")
             // Optimization: Replace runCatching with try-catch to avoid Result object allocation in hot path
+            var p: Parcel? = null
             try {
                 data.enforceInterface(IKeystoreSecurityLevel.DESCRIPTOR)
                 val keyDescriptor =
@@ -177,12 +178,13 @@ class SecurityLevelInterceptor(
                     cleveres.tricky.cleverestech.util.TeeLatencySimulator.simulateGenerateKeyDelay(kgp.algorithm, System.nanoTime() - startNanos)
                     val response = buildResponse(pair.second, kgp, keyDescriptor, callingUid)
                     keys[Key(callingUid, keyDescriptor.alias)] = Info(pair.first, response)
-                    val p = Parcel.obtain()
+                    p = Parcel.obtain()
                     p.writeNoException()
                     p.writeTypedObject(response.metadata, 0)
                     return OverrideReply(0, p)
                 }
             } catch (it: Exception) {
+                p?.recycle()
                 Logger.e("parse key gen request", it)
             }
         }

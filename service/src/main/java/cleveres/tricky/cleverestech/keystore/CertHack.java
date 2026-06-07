@@ -860,7 +860,13 @@ public final class CertHack {
             ASN1Encodable[] arr = new ASN1Encodable[2];
             arr[ATTESTATION_PACKAGE_INFO_PACKAGE_NAME_INDEX] =
                     new DEROctetString(packages[i].getBytes(StandardCharsets.UTF_8));
-            arr[ATTESTATION_PACKAGE_INFO_VERSION_INDEX] = new ASN1Integer(info.getLongVersionCode());
+            long versionCode = 0;
+            if (android.os.Build.VERSION.SDK_INT >= 28) {
+                versionCode = info.getLongVersionCode();
+            } else {
+                versionCode = info.versionCode;
+            }
+            arr[ATTESTATION_PACKAGE_INFO_VERSION_INDEX] = new ASN1Integer(versionCode);
             packageInfoAA[i] = new DERSequence(arr);
             for (var s : info.signatures) {
                 signatures.add(new Digest(dg.digest(s.toByteArray())));

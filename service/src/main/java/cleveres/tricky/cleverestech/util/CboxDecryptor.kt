@@ -52,13 +52,32 @@ object CboxDecryptor {
             val iv = ByteArray(IV_LENGTH)
             if (inputStream.read(iv) != IV_LENGTH) return null
 
-            // 3. Read Ciphertext
-            val ciphertext = inputStream.readBytes()
+            // 3. Read Ciphertext with size limit to prevent OOM
+            val maxCiphertextSize = 50 * 1024 * 1024 // 50MB
+            val ciphertextStream = java.io.ByteArrayOutputStream()
+            val buf = ByteArray(8192)
+            var totalRead = 0
+            var n: Int
+            while (inputStream.read(buf).also { n = it } != -1) {
+                totalRead += n
+                if (totalRead > maxCiphertextSize) {
+                    Logger.e("CBOX ciphertext exceeds ${maxCiphertextSize / 1024 / 1024}MB limit")
+                    return null
+                }
+                ciphertextStream.write(buf, 0, n)
+            }
+            val ciphertext = ciphertextStream.toByteArray()
 
             // 4. Derive Key
             val secretKeyFactory = SecretKeyFactory.getInstance(PBKDF2_ALGORITHM)
-            val keySpec = PBEKeySpec(password.toCharArray(), salt, ITERATION_COUNT, KEY_LENGTH)
-            val keyBytes = secretKeyFactory.generateSecret(keySpec).encoded
+            val passwordChars = password.toCharArray()
+            val keyBytes: ByteArray
+            try {
+                val keySpec = PBEKeySpec(passwordChars, salt, ITERATION_COUNT, KEY_LENGTH)
+                keyBytes = secretKeyFactory.generateSecret(keySpec).encoded
+            } finally {
+                passwordChars.fill('\u0000')
+            }
             val secretKey = SecretKeySpec(keyBytes, "AES")
 
             // 5. Decrypt

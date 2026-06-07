@@ -39,6 +39,7 @@ object KeystoreInterceptor : BinderInterceptor() {
                 Logger.d { "intercept pre  $target uid=$callingUid pid=$callingPid dataSz=${data.dataSize()}" }
                 if (Config.needGenerate(callingUid)) {
                     // Optimization: Replace runCatching with try-catch to avoid Result object allocation in hot path
+                    var p: Parcel? = null
                     try {
                         data.enforceInterface(IKeystoreService.DESCRIPTOR)
                         val descriptor =
@@ -47,11 +48,12 @@ object KeystoreInterceptor : BinderInterceptor() {
                             SecurityLevelInterceptor.getKeyResponse(callingUid, descriptor.alias)
                             ?: return Skip
                         Logger.i("generate key for uid=$callingUid alias=${descriptor.alias}")
-                        val p = Parcel.obtain()
+                        p = Parcel.obtain()
                         p.writeNoException()
                         p.writeTypedObject(response, 0)
                         return OverrideReply(0, p)
                     } catch (e: Exception) {
+                        p?.recycle()
                         // Ignore and fallback to Skip
                     }
                 }
@@ -106,8 +108,8 @@ object KeystoreInterceptor : BinderInterceptor() {
         return Skip
     }
 
-    private var triedCount = 0
-    private var injected = false
+    private val triedCount = java.util.concurrent.atomic.AtomicInteger(0)
+    @Volatile private var injected = false
 
     @Volatile private var cachedKeystorePid: Int? = null
 
@@ -180,7 +182,7 @@ object KeystoreInterceptor : BinderInterceptor() {
     }
 
     fun tryRunKeystoreInterceptor(): Boolean {
-        Logger.i("trying to register keystore interceptor (attempt=$triedCount) ...")
+        Logger.i("trying to register keystore interceptor (attempt=${triedCount.get()}) ...")
         val b = ServiceManager.getService("android.system.keystore2.IKeystoreService/default") ?: run {
             Logger.d("keystore2 service not yet available, will retry")
             return false
@@ -189,49 +191,50 @@ object KeystoreInterceptor : BinderInterceptor() {
         binderBackdoor = bd
         if (bd == null) {
             // no binder hook, try inject
-            if (triedCount >= 3) {
-                Logger.e("tried injection $triedCount times but still has no backdoor, will keep retrying without exiting daemon")
+            if (triedCount.get() >= 3) {
+                Logger.e("tried injection ${triedCount.get()} times but still has no backdoor, will keep retrying without exiting daemon")
                 return false
             }
             if (!injected) {
                 Logger.i("trying to inject keystore (no binder backdoor found) ...")
                 val pid = findKeystore2Pid()
                 if (pid == null) {
-                    Logger.e("failed to find keystore2 pid! will retry (attempt=$triedCount)")
-                    triedCount += 1
+                    Logger.e("failed to find keystore2 pid! will retry (attempt=${triedCount.get()})")
+                    triedCount.incrementAndGet()
                     return false
                 }
                 Logger.i("found keystore2 at pid=$pid, injecting libcleverestricky.so ...")
-                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull() ?: "arm64-v8a"
+                val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                 val injectPath = "/data/adb/modules/cleverestricky/lib/$abi/inject"
-                val p = Runtime.getRuntime().exec(arrayOf(
+                val p = ProcessBuilder(
                     injectPath,
                     pid.toString(),
                     "libcleverestricky.so",
                     "entry"
-                ))
-                val output = try {
-                    p.inputStream.bufferedReader().use { it.readText().trim() }
-                } catch (_: Exception) { "" }
-                val errOutput = try {
-                    p.errorStream.bufferedReader().use { it.readText().trim() }
-                } catch (_: Exception) { "" }
-                val exitCode = p.waitFor()
-                if (errOutput.isNotBlank()) {
-                    Logger.d("keystore injector stderr: $errOutput")
-                }
-                if (output.isNotBlank()) {
-                    Logger.d("keystore injector output: $output")
-                }
-                if (exitCode != 0) {
-                    Logger.e("failed to inject keystore (exit=$exitCode, pid=$pid); possible conflict with another Zygisk/ptrace module. Will retry without exiting daemon")
-                    triedCount += 1
+                ).redirectOutput(java.io.File("/dev/null"))
+                 .redirectError(java.io.File("/dev/null"))
+                 .start()
+                val completed = p.waitFor(30, java.util.concurrent.TimeUnit.SECONDS)
+                if (!completed) {
+                    Logger.e("inject process timed out after 30s, killing it")
+                    p.destroyForcibly()
+                    triedCount.incrementAndGet()
                     return false
                 }
-                Logger.i("keystore injection succeeded for pid=$pid")
-                injected = true
+                val exitCode = p.exitValue()
+                if (exitCode != 0) {
+                    Logger.e("failed to inject keystore (exit=$exitCode)!")
+                    triedCount.incrementAndGet()
+                    return false
+                } else {
+                    Logger.i("injected keystore successfully")
+                    injected = true
+                }
+                triedCount.incrementAndGet()
+                return false
             }
-            triedCount += 1
+            triedCount.incrementAndGet()
             return false
         }
         val ks = IKeystoreService.Stub.asInterface(b)
