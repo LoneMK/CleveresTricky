@@ -1455,6 +1455,7 @@ class WebServer(
         <div class="tab" id="tab_apps" onclick="switchTab('apps')" role="tab" tabindex="-1" aria-selected="false" aria-controls="apps" onkeydown="handleTabNavigation(event, 'apps')">Apps</div>
         <div class="tab" id="tab_keys" onclick="switchTab('keys')" role="tab" tabindex="-1" aria-selected="false" aria-controls="keys" onkeydown="handleTabNavigation(event, 'keys')">Keyboxes</div>
         <div class="tab" id="tab_info" onclick="switchTab('info')" role="tab" tabindex="-1" aria-selected="false" aria-controls="info" onkeydown="handleTabNavigation(event, 'info')">Info & Resources</div> <div class="tab" id="tab_guide" onclick="switchTab('guide')" role="tab" tabindex="-1" aria-selected="false" aria-controls="guide" onkeydown="handleTabNavigation(event, 'guide')">Guide</div>
+        <div class="tab" id="tab_log" onclick="switchTab('log')" role="tab" tabindex="-1" aria-selected="false" aria-controls="log" onkeydown="handleTabNavigation(event, 'log')">Logs</div>
         <div class="tab" id="tab_editor" onclick="switchTab('editor')" role="tab" tabindex="-1" aria-selected="false" aria-controls="editor" onkeydown="handleTabNavigation(event, 'editor')">Editor</div>
         <div class="tab" id="tab_donate" onclick="switchTab('donate')" role="tab" tabindex="-1" aria-selected="false" aria-controls="donate" onkeydown="handleTabNavigation(event, 'donate')" style="margin-left:auto; color:var(--accent);">Donate</div>
     </div>
@@ -1717,6 +1718,18 @@ class WebServer(
                 <button onclick="runWithState(this, 'Downloading...', downloadLangTemplate)">Download Template</button>
                 <button onclick="runWithState(this, 'Loading...', loadLanguage)">Reload Language File</button>
             </div>
+        </div>
+    </div>
+
+    <div id="log" class="content" role="tabpanel" aria-labelledby="tab_log">
+        <div class="panel">
+            <h3>Module Logs</h3>
+            <p style="font-size:0.9em; color:#888;">View recent logs from the module. You can also download them for sharing.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <button onclick="runWithState(this, 'Refreshing...', fetchLogs)" class="primary">Refresh Logs</button>
+                <button onclick="downloadLogs()">Download Logs</button>
+            </div>
+            <textarea id="logViewer" style="height:400px; width:100%; font-family:monospace; font-size:0.8em; line-height:1.4; padding: 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text);" readonly aria-label="Module Logs"></textarea>
         </div>
     </div>
 
@@ -2073,7 +2086,7 @@ class WebServer(
         function handleTabNavigation(e, id) {
             if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
                 e.preventDefault();
-                const tabs = ['dashboard', 'spoof', 'apps', 'keys', 'info', 'guide', 'editor', 'donate'];
+                const tabs = ['dashboard', 'spoof', 'apps', 'keys', 'info', 'guide', 'log', 'editor', 'donate'];
                 let idx = tabs.indexOf(id);
                 if (e.key === 'ArrowRight') idx = (idx + 1) % tabs.length;
                 else idx = (idx - 1 + tabs.length) % tabs.length;
@@ -2081,6 +2094,33 @@ class WebServer(
                 switchTab(nextId);
                 document.getElementById('tab_' + nextId).focus();
             }
+        }
+
+        async function fetchLogs() {
+            try {
+                const res = await fetch('/api/logs?token=' + TOKEN);
+                const data = await res.text();
+                const viewer = document.getElementById('logViewer');
+                viewer.value = data;
+                viewer.scrollTop = viewer.scrollHeight;
+            } catch (e) {
+                notify('Failed to load logs', 'error');
+            }
+        }
+
+        function downloadLogs() {
+            const content = document.getElementById('logViewer').value;
+            if (!content || content.trim() === '') {
+                notify('No logs to download', 'error');
+                return;
+            }
+            const blob = new Blob([content], {type: "text/plain"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "cleverestricky_logs.txt";
+            a.click();
+            URL.revokeObjectURL(url);
         }
 
         // --- Keys Tab Logic ---
@@ -3055,6 +3095,7 @@ class WebServer(
             if(translations['tab_guide']) document.getElementById('tab_guide').innerText = translations['tab_guide'];
             if(translations['tab_editor']) document.getElementById('tab_editor').innerText = translations['tab_editor'];
             if(translations['tab_donate']) document.getElementById('tab_donate').innerText = translations['tab_donate'];
+            if(translations['tab_log']) document.getElementById('tab_log').innerText = translations['tab_log'];
         }
 
         async function loadResourceUsage() {
@@ -3095,7 +3136,7 @@ class WebServer(
 
             features.forEach(f => {
                 const tr = document.createElement('tr');
-                const isToggleable = ['global_mode', 'rkp_bypass', 'tee_broken_mode'].includes(f.id);
+                const isToggleable = ['global_mode', 'rkp_bypass', 'tee_broken_mode', 'telephony'].includes(f.id);
                 let statusHtml = '';
 
                 if (isToggleable) {
@@ -3134,7 +3175,8 @@ class WebServer(
                 "tab_info": "Info & Resources",
                 "tab_guide": "Guide",
                 "tab_editor": "Editor",
-                "tab_donate": "Donate"
+                "tab_donate": "Donate",
+                "tab_log": "Logs"
             };
             const blob = new Blob([JSON.stringify(template, null, 2)], {type: "application/json"});
             const url = URL.createObjectURL(blob);

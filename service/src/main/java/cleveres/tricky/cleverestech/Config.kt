@@ -55,6 +55,8 @@ object Config {
     @Volatile
     private var isRkpBypass = false
     @Volatile
+    var isTelephonyEnabled = false
+    @Volatile
     private var isSpoofBuild = true
     @Volatile
     private var isSpoofBuildPs = true
@@ -356,6 +358,11 @@ object Config {
         if (previousValue != isRkpBypass) {
             Logger.i("RKP bypass state changed: $previousValue -> $isRkpBypass")
         }
+    }
+
+    private fun updateTelephony(f: File?) {
+        isTelephonyEnabled = f?.exists() == true
+        Logger.i("Telephony is ${if (isTelephonyEnabled) "enabled" else "disabled"} (file=${f?.absolutePath}, exists=${f?.exists()})")
     }
 
     @Volatile
@@ -749,6 +756,7 @@ object Config {
     private const val GLOBAL_MODE_FILE = "global_mode"
     private const val TEE_BROKEN_MODE_FILE = "tee_broken_mode"
     private const val RKP_BYPASS_FILE = "rkp_bypass"
+    private const val TELEPHONY_FILE = "telephony"
     private const val SPOOF_BUILD_FILE = "spoof_build"
     private const val SPOOF_BUILD_PS_FILE = "spoof_build_ps"
     private const val SPOOF_PROPS_FILE = "spoof_props"
@@ -1061,6 +1069,7 @@ object Config {
                 }
 
                 RKP_BYPASS_FILE -> updateRkpBypass(f)
+                TELEPHONY_FILE -> updateTelephony(f)
                 SPOOF_BUILD_FILE -> updateSpoofBuild(f)
                 SPOOF_BUILD_PS_FILE -> updateSpoofBuildPs(f)
                 SPOOF_PROPS_FILE -> updateSpoofProps(f)
@@ -1097,6 +1106,7 @@ object Config {
         updateGlobalMode(File(root, GLOBAL_MODE_FILE))
         updateTeeBrokenMode(File(root, TEE_BROKEN_MODE_FILE))
         updateRkpBypass(File(root, RKP_BYPASS_FILE))
+        updateTelephony(File(root, TELEPHONY_FILE))
         updateSpoofBuild(File(root, SPOOF_BUILD_FILE))
         updateSpoofBuildPs(File(root, SPOOF_BUILD_PS_FILE))
         updateSpoofProps(File(root, SPOOF_PROPS_FILE))
@@ -1286,6 +1296,7 @@ object Config {
         isTeeBrokenMode = false
         isAutoTeeBroken = false
         isRkpBypass = false
+        isTelephonyEnabled = false
         drmFixVars = emptyMap()
         clockSource = { System.currentTimeMillis() }
         cachedLegacyKeyboxes = emptyList()
