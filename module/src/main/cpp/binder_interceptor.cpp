@@ -482,47 +482,29 @@ bool FallbackDatabase::lookup(int api_level, int kernel_major, int kernel_minor,
 // Section 5: Bounds-Checked Stream Parser (State Machine)
 // =============================================================================
 
-// Thread-local SIGSEGV recovery for safe_memcpy probing
-static thread_local sigjmp_buf s_safe_jmp;
-static thread_local volatile bool s_safe_active = false;
-
-// Bug fix: Use _exit() which is async-signal-safe, not signal()/raise()
-static void safe_signal_handler(int sig) {
-  if (s_safe_active) {
-    s_safe_active = false;
-    siglongjmp(s_safe_jmp, 1);
-  }
-  // Not in a safe probe — use async-signal-safe _exit to terminate
-  _exit(128 + sig);
-}
-
-// Safe memory copy: returns false if a SIGSEGV/SIGBUS occurs
+// Safe memory copy using pipe method (kernel validates pointer safely)
 static bool safe_memcpy(void *dst, const void *src, size_t len) {
   if (len == 0) return true;
   if (dst == nullptr || src == nullptr) return false;
 
-  struct sigaction sa_new{}, sa_old_segv{}, sa_old_bus{};
-  sa_new.sa_handler = safe_signal_handler;
-  sa_new.sa_flags = 0;
-  sigemptyset(&sa_new.sa_mask);
+  int fd[2];
+  if (pipe(fd) < 0) return false;
 
-  sigaction(SIGSEGV, &sa_new, &sa_old_segv);
-  sigaction(SIGBUS, &sa_new, &sa_old_bus);
-
-  bool ok = true;
-  s_safe_active = true;
-  if (sigsetjmp(s_safe_jmp, 1) == 0) {
-    memcpy(dst, src, len);
-  } else {
-    ok = false;
-    LOGE("safe_memcpy: caught signal during memory access at %p len=%zu",
-         src, len);
+  // The kernel will safely return EFAULT if 'src' is an invalid pointer,
+  // without raising a SIGSEGV in our process.
+  ssize_t written = write(fd[1], src, len);
+  if (written != (ssize_t)len) {
+    close(fd[0]);
+    close(fd[1]);
+    return false;
   }
-  s_safe_active = false;
 
-  sigaction(SIGSEGV, &sa_old_segv, nullptr);
-  sigaction(SIGBUS, &sa_old_bus, nullptr);
-  return ok;
+  // Read back into 'dst'
+  ssize_t read_bytes = read(fd[0], dst, len);
+  close(fd[0]);
+  close(fd[1]);
+
+  return read_bytes == (ssize_t)len;
 }
 
 bool BinderStreamParser::safeRead(uintptr_t base, size_t offset, void *dst,

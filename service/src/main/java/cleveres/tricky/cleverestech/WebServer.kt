@@ -235,12 +235,8 @@ class WebServer(
     private fun readFile(filename: String): String {
         synchronized(fileLock) {
             return try {
-                if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-                    Logger.e("Path traversal attempt detected in filename: $filename")
-                    return ""
-                }
-                val f = File(configDir, filename)
-                if (!isSafePath(f)) {
+                val f = getSafeFile(configDir, filename)
+                if (f == null) {
                     Logger.e("Path traversal attempt detected: $filename")
                     return ""
                 }
@@ -252,12 +248,8 @@ class WebServer(
     private fun saveFile(filename: String, content: String): Boolean {
         synchronized(fileLock) {
             return try {
-                if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-                    Logger.e("Path traversal attempt detected in save filename: $filename")
-                    return false
-                }
-                val f = File(configDir, filename)
-                if (!isSafePath(f)) {
+                val f = getSafeFile(configDir, filename)
+                if (f == null) {
                     Logger.e("Path traversal attempt detected during save: $filename")
                     return false
                 }
@@ -271,12 +263,9 @@ class WebServer(
     }
 
     private fun fileExists(filename: String): Boolean {
-        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            return false
-        }
         synchronized(fileLock) {
-            val f = File(configDir, filename)
-            return isSafePath(f) && f.exists()
+            val f = getSafeFile(configDir, filename)
+            return f != null && f.exists()
         }
     }
 
@@ -300,11 +289,9 @@ class WebServer(
 
     private fun toggleFile(filename: String, enable: Boolean): Boolean {
         if (!isValidSetting(filename)) return false
-        if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-            return false
-        }
         synchronized(fileLock) {
-            val f = File(configDir, filename)
+            val f = getSafeFile(configDir, filename)
+            if (f == null) return false
             return try {
                 if (enable) {
                     if (!f.exists()) {
@@ -328,14 +315,14 @@ class WebServer(
 
     @Volatile private var cachedTelegramCount: String? = null
     @Volatile private var lastTelegramFetchTime: Long = 0
-    @Volatile private var isFetchingTelegram = false
+    private val isFetchingTelegram = java.util.concurrent.atomic.AtomicBoolean(false)
     private val isResettingDrm = java.util.concurrent.atomic.AtomicBoolean(false)
     private val CACHE_DURATION_SUCCESS = 10 * 60 * 1000L
     private val CACHE_DURATION_ERROR = 1 * 60 * 1000L
 
     @Volatile private var cachedBannedCount: String? = null
     @Volatile private var lastBannedFetchTime: Long = 0
-    @Volatile private var isFetchingBanned = false
+    private val isFetchingBanned = java.util.concurrent.atomic.AtomicBoolean(false)
     private val CACHE_DURATION_BANNED = 1 * 60 * 60 * 1000L // 1 hour
 
     private fun fetchTelegramCount(): String {
@@ -348,15 +335,14 @@ class WebServer(
             if ((now - lastTime) < duration) return currentCache
         }
 
-        if (!isFetchingTelegram) {
-            isFetchingTelegram = true
+        if (isFetchingTelegram.compareAndSet(false, true)) {
             scope.launch {
                 try {
                     val result = doFetchTelegramCount()
                     cachedTelegramCount = result
                     lastTelegramFetchTime = System.currentTimeMillis()
                 } finally {
-                    isFetchingTelegram = false
+                    isFetchingTelegram.set(false)
                 }
             }
         }
@@ -372,15 +358,14 @@ class WebServer(
             return currentCache
         }
 
-        if (!isFetchingBanned) {
-            isFetchingBanned = true
+        if (isFetchingBanned.compareAndSet(false, true)) {
             scope.launch {
                 try {
                     val count = KeyboxVerifier.countRevokedKeys()
                     cachedBannedCount = if (count >= 0) count.toString() else "Error"
                     lastBannedFetchTime = System.currentTimeMillis()
                 } finally {
-                    isFetchingBanned = false
+                    isFetchingBanned.set(false)
                 }
             }
         }
@@ -967,9 +952,6 @@ class WebServer(
              val tmpFilePath = map["file"]
              if (tmpFilePath != null) {
                  val originalName = getParam(session, "filename") ?: "upload.bin"
-                 if (originalName.contains("..") || originalName.contains("/") || originalName.contains("\\")) {
-                     return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid filename")
-                 }
                  val tmpFile = File(tmpFilePath)
                  val bytes = tmpFile.readBytes()
 
@@ -977,8 +959,8 @@ class WebServer(
                  if (originalName.endsWith(".cbox") || originalName.endsWith(".zip")) {
                      val keyboxDir = File(configDir, "keyboxes")
                      SecureFile.mkdirs(keyboxDir, 448)
-                     val dest = File(keyboxDir, originalName)
-                     if (!dest.canonicalPath.startsWith(keyboxDir.canonicalPath + File.separator) && dest.canonicalPath != keyboxDir.canonicalPath) {
+                     val dest = getSafeFile(keyboxDir, originalName)
+                     if (dest == null) {
                          return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Path traversal attempt detected")
                      }
                      SecureFile.writeBytes(dest, bytes)
@@ -1001,11 +983,8 @@ class WebServer(
                      }
                      val keyboxDir = File(configDir, "keyboxes")
                      SecureFile.mkdirs(keyboxDir, 448)
-                     if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-                         return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid filename")
-                     }
-                     val file = File(keyboxDir, filename)
-                     if (!isSafePath(file) || !file.canonicalPath.startsWith(keyboxDir.canonicalPath)) {
+                     val file = getSafeFile(keyboxDir, filename)
+                     if (file == null) {
                          return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Path traversal attempt detected")
                      }
                      try {
@@ -1027,13 +1006,10 @@ class WebServer(
              try { session.parseBody(map) } catch(e:Exception){}
              val filename = getParam(session, "filename")
              if (filename != null && isValidFilename(filename)) {
-                 if (filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
-                     return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid filename")
-                 }
                  synchronized(fileLock) {
                      val keyboxDir = File(configDir, "keyboxes")
-                     val f = File(keyboxDir, filename)
-                     if (isSafePath(f) && f.canonicalPath.startsWith(keyboxDir.canonicalPath) && f.exists()) {
+                     val f = getSafeFile(keyboxDir, filename)
+                     if (f != null && f.exists()) {
                          if (f.delete()) {
                              if (filename.endsWith(".cbox")) {
                                  val cacheFile = File(keyboxDir, "$filename.cache")
@@ -3257,6 +3233,22 @@ class WebServer(
     }
 
     companion object {
+        fun getSafeFile(baseDir: File, requestedPath: String): File? {
+            val targetFile = File(baseDir, requestedPath)
+            return try {
+                val canonicalBase = baseDir.canonicalPath
+                val canonicalTarget = targetFile.canonicalPath
+                if (canonicalTarget.equals(canonicalBase) || canonicalTarget.startsWith(canonicalBase + File.separator)) {
+                    targetFile
+                } else {
+                    Logger.e("Path Traversal attempt prevented! Target: $canonicalTarget")
+                    null
+                }
+            } catch (e: Exception) {
+                null
+            }
+        }
+
 
         fun isValidPkg(s: String): Boolean {
             if (s.isEmpty()) return false
@@ -3319,7 +3311,7 @@ class WebServer(
         }
 
         fun isValidFilename(name: String): Boolean {
-            return cleveres.tricky.cleverestech.isValidFilename(name) && !name.contains("..") && !name.contains("/") && !name.contains("\\")
+            return cleveres.tricky.cleverestech.isValidFilename(name)
         }
 
         fun validateContent(filename: String, content: String): Boolean {
@@ -3442,11 +3434,8 @@ class WebServer(
                 var entry = zis.nextEntry
                 while (entry != null) {
                     val name = entry.name
-                    if (name.contains("..") || name.startsWith("/") || name.contains("\\")) {
-                        throw SecurityException("Zip entry contains path traversal: $name")
-                    }
-                    val file = File(configDir, name)
-                    if (file.canonicalPath.equals(configDir.canonicalPath) || file.canonicalPath.startsWith(configDir.canonicalPath + File.separator)) {
+                    val file = getSafeFile(configDir, name)
+                    if (file != null) {
                         if (name.startsWith("keyboxes/")) {
                             File(configDir, "keyboxes").mkdirs()
                         }
