@@ -206,7 +206,7 @@ jobs:
 
       - name: Create Tag & Release
         if: steps.check_release.outputs.create_release == 'true'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: "V${{ env.VERSION }}"
           name: "Release V${{ env.VERSION }}"
