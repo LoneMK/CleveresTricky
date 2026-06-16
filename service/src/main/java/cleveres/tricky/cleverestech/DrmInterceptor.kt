@@ -306,7 +306,7 @@ object DrmInterceptor : BinderInterceptor() {
                         val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
                         val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                         val p = ProcessBuilder(
-                            "$modulePath/lib/$abi/inject",
+                            "$modulePath/inject",
                             pid.toString(),
                             "$modulePath/libcleverestricky.so",
                             "entry"
