@@ -86,21 +86,25 @@ case "$ARCH" in
     ui_print "- Extracting x64 libraries"
     extract "$ZIPFILE" "lib/x86_64/lib$SONAME.so" "$MODPATH" true
     extract "$ZIPFILE" "lib/x86_64/inject" "$MODPATH" true
+    mv "$MODPATH/lib/x86_64/inject" "$MODPATH/inject"
     ;;
   "arm64")
     ui_print "- Extracting arm64 libraries"
     extract "$ZIPFILE" "lib/arm64-v8a/lib$SONAME.so" "$MODPATH" true
     extract "$ZIPFILE" "lib/arm64-v8a/inject" "$MODPATH" true
+    mv "$MODPATH/lib/arm64-v8a/inject" "$MODPATH/inject"
     ;;
   "arm")
     ui_print "- Extracting arm libraries"
     extract "$ZIPFILE" "lib/armeabi-v7a/lib$SONAME.so" "$MODPATH" true
     extract "$ZIPFILE" "lib/armeabi-v7a/inject" "$MODPATH" true
+    mv "$MODPATH/lib/armeabi-v7a/inject" "$MODPATH/inject"
     ;;
   "x86")
     ui_print "- Extracting x86 libraries"
     extract "$ZIPFILE" "lib/x86/lib$SONAME.so" "$MODPATH" true
     extract "$ZIPFILE" "lib/x86/inject" "$MODPATH" true
+    mv "$MODPATH/lib/x86/inject" "$MODPATH/inject"
     ;;
   *)
     abort "! Unsupported ARCH: $ARCH"
