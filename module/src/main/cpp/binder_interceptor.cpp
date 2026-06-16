@@ -1268,6 +1268,37 @@ status_t BinderInterceptor::onTransact(uint32_t code,
       }
       return BAD_VALUE;
   }
+  if (code == 0xbaad0001) {
+      LOGI("🔥 God-Mode Evolution: Triggering Rust APEX Spoofing via 0xbaad0001");
+      if (reply == nullptr) {
+          LOGE("Missing reply parcel for APEX spoofing transaction");
+          return BAD_VALUE;
+      }
+
+      std::string moduleName;
+      if (!readString16_manual(data, moduleName)) {
+          LOGE("Failed to read APEX module name");
+          return BAD_VALUE;
+      }
+
+      RustBuffer payload = rust_apex_spoof_get(reinterpret_cast<const uint8_t*>(moduleName.c_str()), moduleName.size());
+
+      if (payload.data && payload.len > 0) {
+          if (payload.len > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+              LOGE("Spoofed APEX version too large: %zu", payload.len);
+              rust_free_buffer(payload);
+              return BAD_VALUE;
+          }
+          status_t status = reply->writeNoException();
+          if (status == OK) {
+              std::string spoofedVersion(reinterpret_cast<const char*>(payload.data), payload.len);
+              writeString16_manual(*reply, spoofedVersion.c_str());
+          }
+          rust_free_buffer(payload);
+          return OK;
+      }
+      return BAD_VALUE;
+  }
   if (code == REGISTER_INTERCEPTOR) {
     sp<IBinder> target, interceptor;
     if (data.readStrongBinder(&target) != OK) {

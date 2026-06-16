@@ -48,6 +48,24 @@ open class BinderInterceptor : Binder() {
             }
         }
 
+
+        fun triggerApexSpoof(backdoor: IBinder, moduleName: String): String? {
+            val data = Parcel.obtain()
+            val reply = Parcel.obtain()
+            try {
+                data.writeString(moduleName)
+                backdoor.transact(0xbaad0001.toInt(), data, reply, 0)
+                reply.readException()
+                return reply.readString()
+            } catch (e: Exception) {
+                Logger.e("Failed to trigger APEX spoofing", e)
+                return null
+            } finally {
+                data.recycle()
+                reply.recycle()
+            }
+        }
+
         fun registerBinderInterceptor(backdoor: IBinder, target: IBinder, interceptor: BinderInterceptor, filteredCodes: IntArray = intArrayOf()) {
             val data = Parcel.obtain()
             val reply = Parcel.obtain()
