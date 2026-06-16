@@ -1711,7 +1711,7 @@ class WebServer(
             <p>To add a language, download the template below, translate the values, and place the resulting <code>lang.json</code> file in <code>/data/adb/cleverestricky/</code>. Then click Reload.</p>
             <div class="grid-2">
                 <button onclick="runWithState(this, 'Downloading...', downloadLangTemplate)">Download Template</button>
-                <button onclick="runWithState(this, 'Loading...', loadLanguage)">Reload Language File</button>
+                <button onclick="runWithState(this, 'Loading...', () => { notify('Loading...', 'working'); return loadLanguage().then(() => notify('Language Loaded')); })">Reload Language File</button>
             </div>
         </div>
     </div>
@@ -2093,13 +2093,16 @@ class WebServer(
 
         async function fetchLogs() {
             try {
-                const res = await fetch('/api/logs?token=' + TOKEN);
+                const res = await fetchAuth('/api/logs');
+                if (!res.ok) throw new Error(await res.text());
                 const data = await res.text();
                 const viewer = document.getElementById('logViewer');
                 viewer.value = data;
                 viewer.scrollTop = viewer.scrollHeight;
+                notify('Logs refreshed', 'normal');
             } catch (e) {
-                notify('Failed to load logs', 'error');
+                console.error(e);
+                notify('Failed to load logs: ' + e.message, 'error');
             }
         }
 
@@ -2116,6 +2119,7 @@ class WebServer(
             a.download = "cleverestricky_logs.txt";
             a.click();
             URL.revokeObjectURL(url);
+            notify('Download started', 'normal');
         }
 
         // --- Keys Tab Logic ---
@@ -2414,7 +2418,9 @@ class WebServer(
             } catch(e) { console.log('[CleveresTricky] Location settings load failed (expected if no file)'); }
         }
 
-        async function toggle(setting) { const el = document.getElementById(setting); try { const res = await fetchAuth('/api/toggle', {method:'POST', body: new URLSearchParams({setting, value: el.checked})}); if (res.ok) { notify('Setting Updated'); if (setting === 'rkp_bypass') { const s = document.getElementById('status_rkp'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } else if (setting === 'drm_fix') { const s = document.getElementById('status_drm'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } else if (setting === 'global_mode') { const s = document.getElementById('status_global'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } } else { throw new Error('Server returned ' + res.status); } } catch(e){ el.checked=!el.checked; notify('Error: ' + e.message, 'error'); } }
+        async function toggle(setting) {
+            notify('Updating...', 'working');
+            const el = document.getElementById(setting); try { const res = await fetchAuth('/api/toggle', {method:'POST', body: new URLSearchParams({setting, value: el.checked})}); if (res.ok) { notify('Setting Updated'); if (setting === 'rkp_bypass') { const s = document.getElementById('status_rkp'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } else if (setting === 'drm_fix') { const s = document.getElementById('status_drm'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } else if (setting === 'global_mode') { const s = document.getElementById('status_global'); if(s) { if(el.checked) { s.innerHTML='ACTIVE'; s.style.color='var(--success)'; s.style.background='rgba(74, 222, 128, 0.1)'; } else { s.innerHTML='INACTIVE'; s.style.color='var(--danger)'; s.style.background='rgba(239, 68, 68, 0.1)'; } } } } else { throw new Error('Server returned ' + res.status); } } catch(e){ el.checked=!el.checked; notify('Error: ' + e.message, 'error'); } }
 
         function editDrmConfig() {
             document.getElementById('fileSelector').value = 'drm_fix';
@@ -3014,7 +3020,7 @@ class WebServer(
             }
         }
         async function handleSave(btn) {
-             btn.disabled = true; btn.innerText = 'Saving...';
+             btn.disabled = true; btn.innerText = 'Saving...'; notify('Saving...', 'working');
              const content = document.getElementById('fileEditor').value;
              try {
                  const res = await fetchAuth('/api/save', { method: 'POST', body: new URLSearchParams({ filename: currentFile, content: content }) });

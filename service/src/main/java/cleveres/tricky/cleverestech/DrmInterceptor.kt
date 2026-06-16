@@ -261,7 +261,7 @@ object DrmInterceptor : BinderInterceptor() {
 
     private fun findDrmService(): IBinder? {
         for (name in DRM_SERVICE_NAMES) {
-            val b = kotlin.runCatching { ServiceManager.getService(name) }.getOrNull()
+            val b = try { ServiceManager.getService(name) } catch (e: Exception) { null }
             if (b != null) {
                 Logger.d("DRM: Found service via '$name'")
                 return b
@@ -306,7 +306,7 @@ object DrmInterceptor : BinderInterceptor() {
                         val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
                         val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                         val p = ProcessBuilder(
-                            "$modulePath/lib/$abi/inject",
+                            "/data/adb/modules/cleverestricky/inject",
                             pid.toString(),
                             "$modulePath/libcleverestricky.so",
                             "entry"
