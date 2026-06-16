@@ -261,7 +261,7 @@ object DrmInterceptor : BinderInterceptor() {
 
     private fun findDrmService(): IBinder? {
         for (name in DRM_SERVICE_NAMES) {
-            val b = kotlin.runCatching { ServiceManager.getService(name) }.getOrNull()
+            val b = try { ServiceManager.getService(name) } catch (e: Exception) { null }
             if (b != null) {
                 Logger.d("DRM: Found service via '$name'")
                 return b

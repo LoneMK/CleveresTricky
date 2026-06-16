@@ -238,15 +238,14 @@ object KeystoreInterceptor : BinderInterceptor() {
             return false
         }
         val ks = IKeystoreService.Stub.asInterface(b)
-        val tee = kotlin.runCatching { ks.getSecurityLevel(SecurityLevel.TRUSTED_ENVIRONMENT) }
-            .getOrNull()
+        val tee = try { ks.getSecurityLevel(SecurityLevel.TRUSTED_ENVIRONMENT) } catch (e: Exception) { null }
         if (tee == null) {
             Config.setTeeBroken(true)
         } else {
             Config.setTeeBroken(false)
         }
         val strongBox =
-            kotlin.runCatching { ks.getSecurityLevel(SecurityLevel.STRONGBOX) }.getOrNull()
+            try { ks.getSecurityLevel(SecurityLevel.STRONGBOX) } catch (e: Exception) { null }
         
         // Register PropertyHiderService with the native layer
         val propertyHiderService = PropertyHiderService()
@@ -295,7 +294,7 @@ object KeystoreInterceptor : BinderInterceptor() {
      * Required for RKP spoofing to achieve MEETS_STRONG_INTEGRITY.
      */
     private fun findRemotelyProvisionedComponent(): IRemotelyProvisionedComponent? {
-        return kotlin.runCatching {
+        return try {
             // Try default instance first
             var b = ServiceManager.getService(
                 "android.hardware.security.keymint.IRemotelyProvisionedComponent/default"
@@ -311,9 +310,10 @@ object KeystoreInterceptor : BinderInterceptor() {
             } else {
                 null
             }
-        }.onFailure {
-            Logger.e("Failed to find RemotelyProvisionedComponent", it)
-        }.getOrNull()
+        } catch (e: Exception) {
+            Logger.e("Failed to find RemotelyProvisionedComponent", e)
+            null
+        }
     }
 
     object Killer : IBinder.DeathRecipient {
