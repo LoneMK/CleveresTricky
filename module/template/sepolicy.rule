@@ -1,80 +1,20 @@
-# Define a type for the CleveresTricky daemon and its executable files
-type cleverestricky_daemon;
-type cleverestricky_exec, exec_type, file_type, system_file_type;
-
-# Define a type for CleveresTricky's data files in /data/adb/cleverestricky
-type cleverestricky_data_file, file_type, data_file_type;
-
-# Allow the daemon to execute its own 'inject' program (assumed to be labeled cleverestricky_exec or module_file)
-allow cleverestricky_daemon cleverestricky_exec:file { execute read open getattr execute_no_trans };
-allow cleverestricky_daemon module_file:file { execute read open getattr execute_no_trans }; # More generic for files in MODDIR
-
-# Permissions for ptrace from cleverestricky_daemon to keystore2 (keystore_server)
-allow cleverestricky_daemon keystore_server:process { ptrace };
-
-# Binder IPC between keystore_server (keystore2, client) and cleverestricky_daemon (server for PropertyHiderService, KeystoreInterceptor callbacks)
-allow keystore_server cleverestricky_daemon:binder { call transfer };
-allow cleverestricky_daemon keystore_server:binder { transfer }; # For replies and C++ calling back to Java interceptors
-
-# Permissions for cleverestricky_daemon to read its config files in /data/adb/cleverestricky
-allow cleverestricky_daemon cleverestricky_data_file:dir { search read open getattr write create setattr unlink add_name remove_name };
-allow cleverestricky_daemon cleverestricky_data_file:file { read open getattr write create setattr unlink };
-
-# Allow cleverestricky_daemon (Java service part) to find and call essential system services
-allow cleverestricky_daemon keystore_service:service_manager { find };
-allow cleverestricky_daemon package_service:service_manager { find };
-
-# Allow cleverestricky_daemon to read system properties (e.g., ro.boot.vbmeta.digest by util.kt)
-allow cleverestricky_daemon system_prop:file { read open getattr };
-allow cleverestricky_daemon exported_default_prop:file { read open getattr }; # Common property context
-
-# Allow daemon to execute /system/bin/sh (used by KeystoreInterceptor to call inject)
-allow cleverestricky_daemon shell_exec:file { execute read open getattr execute_no_trans };
-
-# Allow cleverestricky_daemon to access network (WebServer, Telegram Stats)
-allow cleverestricky_daemon self:tcp_socket { create bind connect listen accept getattr getopt setopt read write };
-allow cleverestricky_daemon self:udp_socket { create bind connect getattr getopt setopt read write };
-allow cleverestricky_daemon node:tcp_socket node_bind;
-allow cleverestricky_daemon port:tcp_socket name_bind;
-allow cleverestricky_daemon port:udp_socket name_bind;
-allow cleverestricky_daemon fwmarkd_socket:sock_file write;
-allow cleverestricky_daemon netd:unix_stream_socket connectto;
-
-# Allow cleverestricky_daemon to read /proc (findKeystore2Pid, findDrmServicePid, etc.)
-allow cleverestricky_daemon proc:dir { search read open getattr };
-allow cleverestricky_daemon proc:file { read open getattr };
-allow cleverestricky_daemon proc:lnk_file { read getattr };
-
-# Unix domain sockets for injection FD passing (abstract namespace SCM_RIGHTS)
-allow cleverestricky_daemon self:unix_dgram_socket { create bind getattr getopt setopt read write sendto };
-
-# Define a type for module files that need to be publicly readable (APKs, libs)
-type cleverestricky_public_file, file_type, data_file_type, mlstrustedobject;
-
-# Allow all domains to read public module files (e.g. for Xposed/LSPosed loading)
-allow * cleverestricky_public_file:file { read open getattr map };
-
 # allow hooking system server
-allow system_server system_server process execmem;
-allow zygote zygote process execmem;
+allow system_server system_server:process { execmem };
+allow zygote zygote:process { execmem };
 
 # allow zygote unmounting
-allow zygote adb_data_file dir search;
-allow zygote mnt_vendor_file dir search;
-allow zygote system_file dir mounton;
-allow zygote labeledfs filesystem mount;
-allow zygote fs_type filesystem unmount;
+allow zygote adb_data_file:dir { search };
+allow zygote mnt_vendor_file:dir { search };
+allow zygote system_file:dir { mounton };
+allow zygote labeledfs:filesystem { mount };
+allow zygote fs_type:filesystem { unmount };
 
-allow zygote unlabeled file { open read getattr };
-allow zygote zygote capability sys_chroot;
-allow zygote nsfs file { open read };
+allow zygote unlabeled:file { open read getattr };
+allow zygote zygote:capability { sys_chroot };
+allow zygote nsfs:file { open read };
 
 # TelephonyInterceptor support (System-Wide IMEI Spoofing)
-allow radio radio process execmem;
-allow cleverestricky_daemon radio:process { ptrace };
-allow radio cleverestricky_daemon:binder { call transfer };
-allow cleverestricky_daemon radio:binder { transfer };
-allow cleverestricky_daemon keystore:unix_dgram_socket { sendto };
+allow radio radio:process { execmem };
 allow system_file keystore:unix_dgram_socket { sendto };
 
 # Allow keystore to read unlabeled files (for libCleveresTricky.so fallback)

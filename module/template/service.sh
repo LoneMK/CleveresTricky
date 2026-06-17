@@ -28,11 +28,12 @@ while [ true ]; do
   # Auto-repair SELinux contexts before each daemon launch.
   # This makes the module self-healing: if contexts were lost (e.g. after
   # an OTA or module update), the daemon can still start and inject.
-  chcon u:object_r:cleverestricky_exec:s0 "$MODDIR/daemon" 2>/dev/null
-  chcon u:object_r:cleverestricky_exec:s0 "$MODDIR/inject" 2>/dev/null
-  find "$MODDIR" -maxdepth 1 -name '*.apk' -exec chcon u:object_r:cleverestricky_public_file:s0 {} + 2>/dev/null
-  find "$MODDIR" -maxdepth 1 -name '*.so' -exec chcon u:object_r:cleverestricky_public_file:s0 {} + 2>/dev/null
-  [ -d "$CONFIG_DIR" ] && chcon -R u:object_r:cleverestricky_data_file:s0 "$CONFIG_DIR" 2>/dev/null
+  chcon u:object_r:system_file:s0 "$MODDIR/daemon" 2>/dev/null
+  chcon u:object_r:system_file:s0 "$MODDIR/inject" 2>/dev/null
+  find "$MODDIR" -maxdepth 1 -name '*.apk' -exec chcon u:object_r:system_file:s0 {} + 2>/dev/null
+  find "$MODDIR" -maxdepth 1 -name '*.so' -exec chcon u:object_r:system_file:s0 {} + 2>/dev/null
+  [ -d "$CONFIG_DIR" ] && chcon -R u:object_r:system_file:s0 "$CONFIG_DIR" 2>/dev/null
+
 
   ./daemon
   EXIT_CODE=$?
