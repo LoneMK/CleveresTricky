@@ -1353,7 +1353,7 @@ class WebServer(
         @keyframes spin { to { transform: rotate(360deg); } }
         h1 { text-align: center; font-weight: 200; letter-spacing: 2px; margin: 25px 0; color: var(--accent); font-size: 1.5em; text-transform: uppercase; }
         .tabs { display: flex; justify-content: flex-start; border-bottom: 1px solid var(--border); background: var(--panel); overflow-x: auto; position: sticky; top: 0; z-index: 100; -webkit-overflow-scrolling: touch; }
-        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; }
+        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; }
         .tab:hover { opacity: 0.9; }
         .tab.active { border-bottom-color: var(--accent); opacity: 1; color: var(--accent); }
         .content { display: none; padding: 20px; max-width: 800px; margin: 0 auto; padding-bottom: 80px; }
@@ -1364,9 +1364,9 @@ class WebServer(
         .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 44px; }
         .row.wrap { flex-wrap: wrap; }
         label { font-size: 0.9em; color: #BBB; cursor: pointer; }
-        input[type="text"], input[type="password"], textarea, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; font-size: 0.95em; min-height: 44px; }
+        input[type="text"], input[type="password"], textarea, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; font-size: 0.95em; min-height: 44px; min-width: 44px; }
         input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; }
-        button { background: var(--border); border: none; color: var(--fg); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.95em; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; min-height: 44px; touch-action: manipulation; }
+        button { background: var(--border); border: none; color: var(--fg); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.95em; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; min-height: 44px; min-width: 44px; touch-action: manipulation; }
         button:hover { background: #444; }
         button:active { transform: scale(0.98); }
         button.primary { background: var(--accent); color: #000; }
@@ -1428,7 +1428,7 @@ class WebServer(
             .panel { padding: 14px; margin-bottom: 14px; }
             h1 { font-size: 1.2em; margin: 15px 0; }
             .tabs { gap: 0; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding: 0 4px; }
-            .tab { scroll-snap-align: start; padding: 12px 14px; font-size: 0.82em; }
+            .tab { scroll-snap-align: start; padding: 12px 14px; font-size: 0.82em;  min-width: 44px; }
             .row { flex-wrap: wrap; gap: 8px; }
             .responsive-table thead { display: none; }
             .responsive-table tr { display: block; border: 1px solid var(--border); margin-bottom: 10px; border-radius: 8px; background: #1a1a1a; }
