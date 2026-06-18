@@ -247,12 +247,6 @@ bool rust_is_remediation_dialog_intent(const uint8_t* action_ptr, size_t action_
 void rust_record_token_request(void);
 bool rust_is_request_rate_normal(void);
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* CLEVERESTRICKY_CBOR_COSE_H */
-
 /* ==== APEX Spoofing ==== */
 
 /**
@@ -270,3 +264,9 @@ RustBuffer rust_apex_spoof_get(const uint8_t *name_ptr, size_t name_len);
  * The caller must free the buffer with `rust_free_buffer`.
  */
 RustBuffer rust_generate_hardware_simulation_exploit(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* CLEVERESTRICKY_CBOR_COSE_H */
