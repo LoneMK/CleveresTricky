@@ -135,6 +135,7 @@ tasks.register<Exec>("cargoBuild") {
         "--release",
         "-p",
         "interceptor",
+        "-p",
         "daemon",
     )
 
