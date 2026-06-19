@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 use libc::c_void;
-use log::{error, info};
+use log::{error, info, debug};
 
 // Process Connector constants
 const CN_IDX_PROC: u32 = 0x1;

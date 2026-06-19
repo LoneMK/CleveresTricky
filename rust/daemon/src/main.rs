@@ -1,3 +1,4 @@
+#![allow(unused)]
 use log::{info, error, debug};
 use shared::logging::init_logger;
 use std::os::unix::process::CommandExt;
