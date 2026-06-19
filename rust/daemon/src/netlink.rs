@@ -1,8 +1,6 @@
 #![allow(dead_code)]
-use libc::{c_int, c_void};
-use log::{error, info, debug};
-
-use std::os::unix::io::AsRawFd;
+use libc::c_void;
+use log::{error, info};
 
 // Process Connector constants
 const CN_IDX_PROC: u32 = 0x1;
@@ -10,33 +8,6 @@ const CN_VAL_PROC: u32 = 0x1;
 const PROC_CN_MCAST_LISTEN: u32 = 1;
 const PROC_EVENT_EXEC: u32 = 0x80000000;
 
-#[repr(C)]
-struct cb_id {
-    idx: u32,
-    val: u32,
-}
-
-#[repr(C)]
-struct cn_msg {
-    id: cb_id,
-    seq: u32,
-    ack: u32,
-    len: u16,
-    flags: u16,
-}
-
-#[repr(C)]
-struct proc_event_header {
-    what: u32,
-    cpu: u32,
-    timestamp_ns: u64,
-}
-
-#[repr(C)]
-struct exec_proc_event {
-    process_pid: u32,
-    process_tgid: u32,
-}
 
 pub fn start_monitoring() -> Result<(), Box<dyn std::error::Error>> {
     info!("Initializing Netlink Process Connector...");
@@ -60,7 +31,7 @@ pub fn start_monitoring() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // Send PROC_CN_MCAST_LISTEN
-    let mut listen_msg: Vec<u8> = vec![0; 1024];
+    let _listen_msg: Vec<u8> = vec![0; 1024];
     // Populate header, cn_msg, and set operation to PROC_CN_MCAST_LISTEN...
     // (Implementation of sending the subscribe message omitted for brevity, 
     // but in production we construct the nlmsghdr + cn_msg + listen value)

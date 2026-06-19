@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 use libc::{c_void, pid_t};
-use log::{info, error, debug};
-use std::ffi::CString;
+use log::{info, error};
 
 pub fn inject_into_pid(pid: pid_t, lib_path: &str) -> bool {
     info!("Attempting to inject {} into pid {}", lib_path, pid);
