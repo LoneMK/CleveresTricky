@@ -60,6 +60,7 @@
 #include "binder_abi.h"
 #include "binder_interceptor.h"
 #include "cleverestricky_cbor_cose.h"
+#include "utils/rust_wrapper.hpp"
 #include "elf_util.h"
 #include "logging.hpp"
 #include "lsplt.hpp"
@@ -490,21 +491,39 @@ static bool safe_memcpy(void *dst, const void *src, size_t len) {
   int fd[2];
   if (pipe(fd) < 0) return false;
 
-  // The kernel will safely return EFAULT if 'src' is an invalid pointer,
-  // without raising a SIGSEGV in our process.
-  ssize_t written = write(fd[1], src, len);
-  if (written != (ssize_t)len) {
-    close(fd[0]);
-    close(fd[1]);
-    return false;
+  const size_t CHUNK_SIZE = 4096;
+  const uint8_t *src_bytes = static_cast<const uint8_t *>(src);
+  uint8_t *dst_bytes = static_cast<uint8_t *>(dst);
+  size_t remaining = len;
+
+  while (remaining > 0) {
+      size_t to_copy = remaining > CHUNK_SIZE ? CHUNK_SIZE : remaining;
+      
+      // The kernel will safely return EFAULT if 'src_bytes' is an invalid pointer,
+      // without raising a SIGSEGV in our process.
+      ssize_t written = write(fd[1], src_bytes, to_copy);
+      if (written != (ssize_t)to_copy) {
+          close(fd[0]);
+          close(fd[1]);
+          return false;
+      }
+
+      ssize_t read_bytes = read(fd[0], dst_bytes, to_copy);
+      if (read_bytes != (ssize_t)to_copy) {
+          close(fd[0]);
+          close(fd[1]);
+          return false;
+      }
+
+      src_bytes += to_copy;
+      dst_bytes += to_copy;
+      remaining -= to_copy;
   }
 
-  // Read back into 'dst'
-  ssize_t read_bytes = read(fd[0], dst, len);
   close(fd[0]);
   close(fd[1]);
 
-  return read_bytes == (ssize_t)len;
+  return true;
 }
 
 bool BinderStreamParser::safeRead(uintptr_t base, size_t offset, void *dst,
@@ -932,13 +951,12 @@ int new_system_property_get(const char *name, char *value) {
   if (found) {
     // FAST PATH: Try zero-IPC Rust cache first
     size_t name_len = strlen(name);
-    RustBuffer rust_buf =
-        rust_prop_get(reinterpret_cast<const uint8_t *>(name), name_len);
-    if (rust_buf.data != nullptr && rust_buf.len > 0) {
+    cleveres::tricky::SafeRustBuffer rust_buf(
+        rust_prop_get(reinterpret_cast<const uint8_t *>(name), name_len));
+    if (rust_buf.data() != nullptr && rust_buf.len() > 0) {
       LOGI("Zero-IPC cache hit for %s", name);
-      std::string spoofed_value(reinterpret_cast<char *>(rust_buf.data),
-                                rust_buf.len);
-      rust_free_buffer(rust_buf);
+      std::string spoofed_value(reinterpret_cast<char *>(rust_buf.data()),
+                                rust_buf.len());
 
       if (value) {
         strncpy(value, spoofed_value.c_str(), PROP_VALUE_MAX - 1);
@@ -948,7 +966,6 @@ int new_system_property_get(const char *name, char *value) {
         return spoofed_value.length();
       }
     }
-    rust_free_buffer(rust_buf);
 
     LOGI("Targeted property access (cache miss): %s", name);
     if (gBinderInterceptor != nullptr &&
@@ -1216,21 +1233,19 @@ status_t BinderInterceptor::onTransact(uint32_t code,
           LOGE("Missing reply parcel for exploit transaction");
           return BAD_VALUE;
       }
-      RustBuffer payload = rust_generate_keymint_exploit_payload();
-      if (payload.data && payload.len > 0) {
-          if (payload.len > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
-              LOGE("Exploit payload too large: %zu", payload.len);
-              rust_free_buffer(payload);
+      cleveres::tricky::SafeRustBuffer payload(rust_generate_keymint_exploit_payload());
+      if (payload.data() && payload.len() > 0) {
+          if (payload.len() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+              LOGE("Exploit payload too large: %zu", payload.len());
               return BAD_VALUE;
           }
           status_t status = reply->writeNoException();
           if (status == OK) {
-              status = reply->writeInt32(static_cast<int32_t>(payload.len));
+              status = reply->writeInt32(static_cast<int32_t>(payload.len()));
           }
           if (status == OK) {
-              status = reply->write(payload.data, payload.len);
+              status = reply->write(payload.data(), payload.len());
           }
-          rust_free_buffer(payload);
           if (status != OK) {
               LOGE("Failed to write exploit payload to reply: %d", status);
               return status;
@@ -1245,21 +1260,19 @@ status_t BinderInterceptor::onTransact(uint32_t code,
           LOGE("Missing reply parcel for exploit transaction");
           return BAD_VALUE;
       }
-      RustBuffer payload = rust_generate_hardware_simulation_exploit();
-      if (payload.data && payload.len > 0) {
-          if (payload.len > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
-              LOGE("Exploit payload too large: %zu", payload.len);
-              rust_free_buffer(payload);
+      cleveres::tricky::SafeRustBuffer payload(rust_generate_hardware_simulation_exploit());
+      if (payload.data() && payload.len() > 0) {
+          if (payload.len() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+              LOGE("Exploit payload too large: %zu", payload.len());
               return BAD_VALUE;
           }
           status_t status = reply->writeNoException();
           if (status == OK) {
-              status = reply->writeInt32(static_cast<int32_t>(payload.len));
+              status = reply->writeInt32(static_cast<int32_t>(payload.len()));
           }
           if (status == OK) {
-              status = reply->write(payload.data, payload.len);
+              status = reply->write(payload.data(), payload.len());
           }
-          rust_free_buffer(payload);
           if (status != OK) {
               LOGE("Failed to write exploit payload to reply: %d", status);
               return status;
@@ -1281,20 +1294,18 @@ status_t BinderInterceptor::onTransact(uint32_t code,
           return BAD_VALUE;
       }
 
-      RustBuffer payload = rust_apex_spoof_get(reinterpret_cast<const uint8_t*>(moduleName.c_str()), moduleName.size());
+      cleveres::tricky::SafeRustBuffer payload(rust_apex_spoof_get(reinterpret_cast<const uint8_t*>(moduleName.c_str()), moduleName.size()));
 
-      if (payload.data && payload.len > 0) {
-          if (payload.len > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
-              LOGE("Spoofed APEX version too large: %zu", payload.len);
-              rust_free_buffer(payload);
+      if (payload.data() && payload.len() > 0) {
+          if (payload.len() > static_cast<size_t>(std::numeric_limits<int32_t>::max())) {
+              LOGE("Spoofed APEX version too large: %zu", payload.len());
               return BAD_VALUE;
           }
           status_t status = reply->writeNoException();
           if (status == OK) {
-              std::string spoofedVersion(reinterpret_cast<const char*>(payload.data), payload.len);
+              std::string spoofedVersion(reinterpret_cast<const char*>(payload.data()), payload.len());
               writeString16_manual(*reply, spoofedVersion.c_str());
           }
-          rust_free_buffer(payload);
           return OK;
       }
       return BAD_VALUE;
@@ -1739,30 +1750,27 @@ entry(void *handle) {
   LOGI("injected, my handle %p", handle);
 
   // Demonstrate RKP generation
-  RustBuffer bcc = rust_generate_spoofed_bcc();
-  if (bcc.data && bcc.len > 0) {
-    LOGI("Generated spoofed BCC of length %zu", bcc.len);
-    rust_free_buffer(bcc);
+  cleveres::tricky::SafeRustBuffer bcc(rust_generate_spoofed_bcc());
+  if (bcc.data() && bcc.len() > 0) {
+    LOGI("Generated spoofed BCC of length %zu", bcc.len());
   } else {
     LOGE("Failed to generate spoofed BCC");
   }
 
   // Demonstrate Advanced KeyMint 4.0 Exploitation
-  RustBuffer exploit = rust_generate_keymint_exploit_payload();
+  cleveres::tricky::SafeRustBuffer exploit(rust_generate_keymint_exploit_payload());
   // Demonstrate Hardware Backed Simulation Exploit
-  RustBuffer hw_exploit = rust_generate_hardware_simulation_exploit();
-  if (hw_exploit.data && hw_exploit.len > 0) {
+  cleveres::tricky::SafeRustBuffer hw_exploit(rust_generate_hardware_simulation_exploit());
+  if (hw_exploit.data() && hw_exploit.len() > 0) {
     LOGI("God-Mode Evolution: Hardware-Backed Simulation payload ready, length %zu",
-         hw_exploit.len);
-    rust_free_buffer(hw_exploit);
+         hw_exploit.len());
   } else {
     LOGE("Failed to generate Hardware-Backed Simulation payload");
   }
 
-  if (exploit.data && exploit.len > 0) {
+  if (exploit.data() && exploit.len() > 0) {
     LOGI("God-Mode Evolution: KeyMint payload ready, length %zu",
-         exploit.len);
-    rust_free_buffer(exploit);
+         exploit.len());
   } else {
     LOGE("Failed to generate KeyMint 4.0 exploit payload");
   }

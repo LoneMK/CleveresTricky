@@ -76,10 +76,20 @@ bool check_ptrace_traceme() {
   }
 
   int status = 0;
-  pid_t waited;
+  pid_t waited = 0;
+  int retries = 0;
   do {
-    waited = waitpid(child, &status, 0);
-  } while (waited == -1 && errno == EINTR);
+    waited = waitpid(child, &status, WNOHANG);
+    if (waited == 0) {
+        if (retries++ > 10) {
+            // Timeout, child is likely paused by a debugger
+            kill(child, SIGKILL);
+            waitpid(child, &status, 0);
+            return true;
+        }
+        usleep(100000); // 100ms
+    }
+  } while (waited == 0 || (waited == -1 && errno == EINTR));
 
   if (waited == -1) {
     PLOGE("waitpid failed in check_ptrace_traceme");

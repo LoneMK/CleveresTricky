@@ -11,6 +11,10 @@
 #define ALOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
 #define ALOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
 
+#ifndef ALIGN_MACRO
+#define ALIGN_MACRO(x, a) (((x) + (a) - 1) & ~((a) - 1))
+#endif
+
 // HAL DELEGATION ROUTER
 // Routes physical hardware IPC calls to our software implementation.
 
@@ -36,10 +40,19 @@ extern "C" int hook_ioctl(int fd, int request, void* arg) {
             uint8_t* end = ptr + bwr->read_consumed;
 
             while (ptr < end) {
+                if (ptr + sizeof(uint32_t) > end) {
+                    break;
+                }
                 uint32_t cmd = *reinterpret_cast<uint32_t*>(ptr);
                 ptr += sizeof(uint32_t);
 
                 if (cmd == BR_TRANSACTION || cmd == BR_TRANSACTION_SEC_CTX) {
+                    if (cmd == BR_TRANSACTION_SEC_CTX) {
+                        if (ptr + sizeof(struct binder_transaction_data_secctx) > end) break;
+                    } else {
+                        if (ptr + sizeof(struct binder_transaction_data) > end) break;
+                    }
+
                     struct binder_transaction_data_secctx* txn_sec =
                         reinterpret_cast<struct binder_transaction_data_secctx*>(ptr);
                     struct binder_transaction_data* txn_data = &txn_sec->transaction_data;
@@ -70,11 +83,12 @@ extern "C" int hook_ioctl(int fd, int request, void* arg) {
 
                     if (cmd == BR_TRANSACTION_SEC_CTX) {
                         ptr += sizeof(struct binder_transaction_data_secctx);
-                        ptr += ALIGN(txn_sec->secctx, sizeof(uint64_t));
+                        ptr += ALIGN_MACRO(txn_sec->secctx, sizeof(uint64_t));
                     } else {
                         ptr += sizeof(struct binder_transaction_data);
                     }
                 } else if (cmd == BR_REPLY) {
+                    if (ptr + sizeof(struct binder_transaction_data) > end) break;
                     ptr += sizeof(struct binder_transaction_data);
                 } else {
                     // Advance pointer appropriately for other commands or break

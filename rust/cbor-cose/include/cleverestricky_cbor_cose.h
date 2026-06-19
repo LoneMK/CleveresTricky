@@ -265,6 +265,18 @@ RustBuffer rust_apex_spoof_get(const uint8_t *name_ptr, size_t name_len);
  */
 RustBuffer rust_generate_hardware_simulation_exploit(void);
 
+/* ==== ELF Parsing ==== */
+uint64_t rust_find_elf_symbol(
+    const uint8_t *elf_buffer, size_t elf_size,
+    const uint8_t *symbol_name, size_t sym_len
+);
+
+/* ==== Binder Parsing ==== */
+bool rust_parse_binder_parcel(
+    const uint8_t *data, size_t size,
+    const uint8_t *target, size_t target_len
+);
+
 #ifdef __cplusplus
 }
 #endif

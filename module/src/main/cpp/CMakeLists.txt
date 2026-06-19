@@ -20,16 +20,13 @@ add_link_options(-Wl,--gc-sections)
 add_compile_options(-Werror -Wall -Wextra -Wno-unused-parameter -fno-rtti -fno-exceptions)
 
 
-add_library(elf_util STATIC elf_util/elf_util.cpp)
 add_library(my_logging STATIC logging/logging.cpp)
 
 add_subdirectory(external)
 
 target_include_directories(my_logging PUBLIC logging/include)
-target_include_directories(elf_util PUBLIC elf_util/include)
 
 target_link_libraries(my_logging log)
-target_link_libraries(elf_util lsplt my_logging)
 
 # libutils stub
 add_library(utils SHARED binder/stub_utils.cpp)
@@ -51,7 +48,7 @@ set_target_properties(rust_core PROPERTIES IMPORTED_LOCATION
 
 add_library(${MODULE_NAME} SHARED binder_interceptor.cpp)
 target_include_directories(${MODULE_NAME} PRIVATE ../../../../rust/cbor-cose/include)
-target_link_libraries(${MODULE_NAME} PRIVATE log binder utils elf_util my_logging rust_core)
+target_link_libraries(${MODULE_NAME} PRIVATE log binder utils my_logging rust_core)
 
 # Native Daemon for Race Condition Engine
 add_executable(keystore_race_daemon daemon/main.cpp)

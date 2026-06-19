@@ -204,6 +204,41 @@ pub unsafe extern "C" fn rust_parse_binder_stream(
         }
 
         *out_txn_count > 0
-    }))
-    .unwrap_or(false)
+    }));
+    result.unwrap_or(false)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn rust_parse_binder_parcel(
+    data: *const u8,
+    size: usize,
+    target: *const u8,
+    target_len: usize,
+) -> bool {
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        if data.is_null() || target.is_null() || size == 0 || target_len == 0 {
+            return false;
+        }
+
+        let parcel_bytes = std::slice::from_raw_parts(data, size);
+        let target_bytes = std::slice::from_raw_parts(target, target_len);
+
+        let target_str = match std::str::from_utf8(target_bytes) {
+            Ok(s) => s,
+            Err(_) => return false,
+        };
+
+        let mut u16_bytes = Vec::new();
+        for c in target_str.encode_utf16() {
+            u16_bytes.extend_from_slice(&c.to_ne_bytes());
+        }
+        
+        if u16_bytes.is_empty() || u16_bytes.len() > parcel_bytes.len() {
+            return false;
+        }
+
+        parcel_bytes.windows(u16_bytes.len()).any(|window| window == u16_bytes.as_slice())
+    }));
+
+    result.unwrap_or(false)
 }
