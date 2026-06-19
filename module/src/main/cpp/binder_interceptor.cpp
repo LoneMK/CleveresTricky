@@ -65,7 +65,7 @@
 #include "logging.hpp"
 #include "lsplt.hpp"
 
-using namespace SandHook;
+
 using namespace android;
 
 // =============================================================================
