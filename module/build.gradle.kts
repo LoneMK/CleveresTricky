@@ -141,15 +141,16 @@ tasks.register<Exec>("cargoBuild") {
     doLast {
         // Since we removed CMake, we copy the .so files directly to where the module zipper expects them
         // The zip task expects libraries in build/intermediates/stripped_native_libs/.../out/lib/
-        // For simplicity, we can copy them to a known directory and adjust the zip task, or 
+        // For simplicity, we can copy them to a known directory and adjust the zip task, or
         // since CMake is completely gone, we can place them directly in the jniLibs equivalent or custom lib dir
         // Let's copy the interceptor .so to where prepareModuleFiles task picks them up
-        val abiMap = mapOf(
-            "aarch64-linux-android" to "arm64-v8a",
-            "armv7-linux-androideabi" to "armeabi-v7a",
-            "x86_64-linux-android" to "x86_64",
-            "i686-linux-android" to "x86",
-        )
+        val abiMap =
+            mapOf(
+                "aarch64-linux-android" to "arm64-v8a",
+                "armv7-linux-androideabi" to "armeabi-v7a",
+                "x86_64-linux-android" to "x86_64",
+                "i686-linux-android" to "x86",
+            )
 
         val baseTarget = "../rust/target"
 
