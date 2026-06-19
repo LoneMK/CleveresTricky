@@ -212,7 +212,7 @@ object TelephonyInterceptor : BinderInterceptor() {
     }
 
     private fun getModulePath(): String {
-        return "/data/adb/modules/cleverestricky"
+        return getModuleDir()
     }
 
 

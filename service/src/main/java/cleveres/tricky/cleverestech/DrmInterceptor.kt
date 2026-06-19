@@ -299,7 +299,7 @@ object DrmInterceptor : BinderInterceptor() {
                     return false
                 }
 
-                val modulePath = "/data/adb/modules/cleverestricky"
+                val modulePath = getModuleDir()
                 Logger.d("DRM: Injecting PID=$pid with $modulePath/libcleverestricky.so")
                 Thread {
                     try {

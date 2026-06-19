@@ -3,7 +3,15 @@
 # Goal: MEETS_STRONG_INTEGRITY
 # Battery-optimized background updates
 
-MODDIR="${MODDIR:-/data/adb/modules/cleverestricky}"
+if [ -z "$MODDIR" ]; then
+    if [ -d "/data/adb/ksu/modules/cleverestricky" ]; then
+        MODDIR="/data/adb/ksu/modules/cleverestricky"
+    elif [ -d "/data/adb/ap/modules/cleverestricky" ]; then
+        MODDIR="/data/adb/ap/modules/cleverestricky"
+    else
+        MODDIR="/data/adb/modules/cleverestricky"
+    fi
+fi
 DATADIR="/data/adb/cleverestricky"
 VERSION=$(grep "^version=" "$MODDIR/module.prop" 2>/dev/null | sed 's/version=//g')
 

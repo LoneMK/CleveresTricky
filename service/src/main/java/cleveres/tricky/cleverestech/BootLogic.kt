@@ -146,7 +146,7 @@ object BootLogic {
 
     private fun checkHideProps() {
         try {
-            val shamikoExists = File("/data/adb/modules/zygisk_shamiko").exists()
+            val shamikoExists = File("/data/adb/modules/zygisk_shamiko").exists() || File("/data/adb/ksu/modules/zygisk_shamiko").exists() || File("/data/adb/ap/modules/zygisk_shamiko").exists()
             val spoofCn = File(configDir, FILE_SPOOF_CN).exists()
 
             if (shamikoExists) {

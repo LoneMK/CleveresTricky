@@ -148,6 +148,6 @@ if [ ! -f "$CONFIG_DIR/target.txt" ]; then
 fi
 [ -f "$CONFIG_DIR/target.txt" ] && chmod 600 "$CONFIG_DIR/target.txt"
 
-if [ ! -d "/data/adb/modules/playintegrityfix" ]; then
+if [ ! -d "/data/adb/modules/playintegrityfix" ] && [ ! -d "/data/adb/ksu/modules/playintegrityfix" ] && [ ! -d "/data/adb/ap/modules/playintegrityfix" ]; then
   nohup am start -a android.intent.action.VIEW -d https://t.me/cleverestech >/dev/null 2>&1 &
 fi

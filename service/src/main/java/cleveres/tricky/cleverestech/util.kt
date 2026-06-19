@@ -9,6 +9,15 @@ import java.util.concurrent.ThreadLocalRandom
 
 var systemPropertiesGet: (String, String?) -> String? = { key, def -> SystemProperties.get(key, def) }
 
+fun getModuleDir(): String {
+    val candidates = listOf(
+        "/data/adb/modules/cleverestricky",
+        "/data/adb/ksu/modules/cleverestricky",
+        "/data/adb/ap/modules/cleverestricky"
+    )
+    return candidates.firstOrNull { java.io.File(it).exists() } ?: "/data/adb/modules/cleverestricky"
+}
+
 fun getTransactCode(clazz: Class<*>, method: String): Int {
     try {
         return clazz.getDeclaredField("TRANSACTION_$method").apply { isAccessible = true }.getInt(null)

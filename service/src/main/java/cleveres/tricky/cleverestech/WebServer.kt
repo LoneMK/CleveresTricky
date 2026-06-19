@@ -1688,7 +1688,7 @@ class WebServer(
             <p>Welcome! CleveresTricky helps you manage Keyboxes and bypass Play Integrity checks. Here is how you can use the module effectively:</p>
 
             <h4>1. Using Standard Keybox.xml</h4>
-            <p>If you have a standard <code>keybox.xml</code> file, simply drop it into the <code>/data/adb/modules/CleveresTricky/</code> or <code>/data/adb/cleverestricky/</code> directory and reboot. The module will automatically inject the keys to bypass attestation checks. If the Keybox is invalid or revoked, the dashboard will notify you.</p>
+            <p>If you have a standard <code>keybox.xml</code> file, simply drop it into the <code>\${getModuleDir()}</code> or <code>/data/adb/cleverestricky/</code> directory and reboot. The module will automatically inject the keys to bypass attestation checks. If the Keybox is invalid or revoked, the dashboard will notify you.</p>
 
             <h4>2. Encrypted .cbox Files</h4>
             <p>For better security, you can use <code>.cbox</code> files. These are encrypted containers that require a password. They keep the raw keys hidden and are cached securely on your device using Android's hardware keystore.</p>

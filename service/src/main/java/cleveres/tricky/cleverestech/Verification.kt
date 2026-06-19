@@ -5,7 +5,7 @@ import java.security.MessageDigest
 import kotlin.system.exitProcess
 
 object Verification {
-    private const val MODULE_PATH = "/data/adb/modules/cleverestricky"
+    private val MODULE_PATH = getModuleDir()
     private val IGNORED_FILES = setOf("disable", "remove", "update", "system.prop", "sepolicy.rule")
 
     var exitProcessImpl: (Int) -> Unit = { exitProcess(it) }
