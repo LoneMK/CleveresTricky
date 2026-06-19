@@ -26,7 +26,7 @@ pub fn start_monitoring() -> Result<(), Box<dyn std::error::Error>> {
     sa.nl_groups = CN_IDX_PROC;
     sa.nl_pid = unsafe { libc::getpid() as u32 };
 
-    if unsafe { libc::bind(fd, &sa as *const _ as *const libc::sockaddr, std::mem::size_of_val(&sa) as u32) } < 0 {
+    if unsafe { libc::bind(fd, &sa as *const _ as *const libc::sockaddr, std::mem::size_of_val(&sa) as libc::socklen_t) } < 0 {
         return Err("Failed to bind netlink socket".into());
     }
 
