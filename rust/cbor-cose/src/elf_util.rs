@@ -2,6 +2,8 @@ use core::slice;
 use goblin::elf::Elf;
 use std::panic::{self, AssertUnwindSafe};
 
+/// # Safety
+/// The `elf_buffer` and `symbol_name` pointers must be valid for reads of `elf_size` and `sym_len` bytes.
 #[no_mangle]
 pub unsafe extern "C" fn rust_find_elf_symbol(
     elf_buffer: *const u8,
@@ -26,14 +28,14 @@ pub unsafe extern "C" fn rust_find_elf_symbol(
             for sym in elf.dynsyms.iter() {
                 if let Some(name) = elf.dynstrtab.get_at(sym.st_name) {
                     if name == sym_str {
-                        return sym.st_value as u64;
+                        return sym.st_value;
                     }
                 }
             }
             for sym in elf.syms.iter() {
                 if let Some(name) = elf.strtab.get_at(sym.st_name) {
                     if name == sym_str {
-                        return sym.st_value as u64;
+                        return sym.st_value;
                     }
                 }
             }

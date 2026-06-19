@@ -208,6 +208,8 @@ pub unsafe extern "C" fn rust_parse_binder_stream(
     .unwrap_or(false)
 }
 
+/// # Safety
+/// The `data` and `target` pointers must be valid for reads of `size` and `target_len` bytes, respectively.
 #[no_mangle]
 pub unsafe extern "C" fn rust_parse_binder_parcel(
     data: *const u8,
