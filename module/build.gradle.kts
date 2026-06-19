@@ -48,12 +48,7 @@ android {
         prefab = true
     }
 
-    externalNativeBuild {
-        cmake {
-            version = "3.22.1"
-            path("src/main/cpp/CMakeLists.txt")
-        }
-    }
+
 }
 
 dependencies {}
@@ -118,7 +113,7 @@ tasks.register<Exec>("installRustTargets") {
 tasks.register<Exec>("cargoBuild") {
     group = "rust"
     description = "Builds the Rust static library for all Android targets using cargo-ndk"
-    workingDir = file("../rust/cbor-cose")
+    workingDir = file("../rust")
     onlyIf { commandExists("cargo") && commandExists("rustup") }
 
     dependsOn("installRustTargets")
@@ -126,7 +121,7 @@ tasks.register<Exec>("cargoBuild") {
     // Treat Rust warnings as errors
     environment("RUSTFLAGS", "-D warnings")
 
-    // Using cargo-ndk to build for all supported ABIs.
+    // Using cargo-ndk to build the interceptor lib for all supported ABIs.
     commandLine(
         "cargo",
         "ndk",
@@ -140,25 +135,41 @@ tasks.register<Exec>("cargoBuild") {
         "x86",
         "build",
         "--release",
+        "-p",
+        "interceptor",
+        "-p",
+        "daemon"
     )
 
     doLast {
-        // Manually copy static libraries to where CMake expects them
-        copy {
-            from("../rust/cbor-cose/target/aarch64-linux-android/release/libcleverestricky_cbor_cose.a")
-            into("src/main/cpp/external/rust_libs/arm64-v8a")
-        }
-        copy {
-            from("../rust/cbor-cose/target/armv7-linux-androideabi/release/libcleverestricky_cbor_cose.a")
-            into("src/main/cpp/external/rust_libs/armeabi-v7a")
-        }
-        copy {
-            from("../rust/cbor-cose/target/x86_64-linux-android/release/libcleverestricky_cbor_cose.a")
-            into("src/main/cpp/external/rust_libs/x86_64")
-        }
-        copy {
-            from("../rust/cbor-cose/target/i686-linux-android/release/libcleverestricky_cbor_cose.a")
-            into("src/main/cpp/external/rust_libs/x86")
+        // Since we removed CMake, we copy the .so files directly to where the module zipper expects them
+        // The zip task expects libraries in build/intermediates/stripped_native_libs/.../out/lib/
+        // For simplicity, we can copy them to a known directory and adjust the zip task, or 
+        // since CMake is completely gone, we can place them directly in the jniLibs equivalent or custom lib dir
+        
+        // Let's copy the interceptor .so to where prepareModuleFiles task picks them up
+        val abiMap = mapOf(
+            "aarch64-linux-android" to "arm64-v8a",
+            "armv7-linux-androideabi" to "armeabi-v7a",
+            "x86_64-linux-android" to "x86_64",
+            "i686-linux-android" to "x86"
+        )
+        
+        val baseTarget = "../rust/target"
+        
+        abiMap.forEach { (rustAbi, androidAbi) ->
+            // Copy interceptor .so
+            copy {
+                from("$baseTarget/$rustAbi/release/libinterceptor.so")
+                into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi"))
+                rename { "libcleverestricky.so" }
+            }
+            
+            // Copy daemon executable
+            copy {
+                from("$baseTarget/$rustAbi/release/daemon")
+                into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi/inject"))
+            }
         }
     }
 }
@@ -229,36 +240,8 @@ afterEvaluate {
                     include("*.apk")
                     rename(".*\\.apk", "service.apk")
                 }
-                from(
-                    layout.buildDirectory.file(
-                        "intermediates/stripped_native_libs/$variantLowered/strip${variantCapped}DebugSymbols/out/lib",
-                    ),
-                ) {
-                    exclude("**/libbinder.so", "**/libutils.so")
+                from(layout.buildDirectory.dir("rust_outputs/lib")) {
                     into("lib")
-                }
-
-                from(layout.buildDirectory.dir("intermediates/cxx")) {
-                    include("**/inject")
-                    eachFile {
-                        val segments = relativePath.segments
-                        // For release builds, we might have RelWithDebInfo, Release, or MinSizeRel directories
-                        // For debug builds, we expect Debug directory
-                        if (buildTypeLowered == "release" && segments.contains("Debug")) {
-                            exclude()
-                            return@eachFile
-                        }
-                        if (buildTypeLowered == "debug" && !segments.contains("Debug")) {
-                            exclude()
-                            return@eachFile
-                        }
-
-                        val abi = segments.find { it in abiList }
-                        if (abi != null) {
-                            relativePath = RelativePath(true, "lib", abi, "inject")
-                        }
-                    }
-                    includeEmptyDirs = false
                 }
 
                 doLast {
