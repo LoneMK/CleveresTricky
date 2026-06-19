@@ -148,11 +148,11 @@ open class BinderInterceptor : Binder() {
                     localResult
                 } finally {
                     // Only recycle if they are not being passed down in an Override result
-                    if (localResult !is OverrideData || (localResult as OverrideData).data !== theData) {
+                    if (localResult !is OverrideData || localResult.data !== theData) {
                         theData.recycle()
                     }
                     if (theReply != null) {
-                        if (localResult !is OverrideReply || (localResult as OverrideReply).reply !== theReply) {
+                        if (localResult !is OverrideReply || localResult.reply !== theReply) {
                             theReply.recycle()
                         }
                     }

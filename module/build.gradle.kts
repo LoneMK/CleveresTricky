@@ -125,12 +125,6 @@ tasks.register<Exec>("cargoBuild") {
         "ndk",
         "-t",
         "arm64-v8a",
-        "-t",
-        "armeabi-v7a",
-        "-t",
-        "x86_64",
-        "-t",
-        "x86",
         "build",
         "--release",
         "-p",
@@ -184,7 +178,7 @@ afterEvaluate {
         val buildTypeCapped = buildType.name.replaceFirstChar { it.uppercase() }
         val buildTypeLowered = buildType.name.lowercase()
         val supportedAbis =
-            abiList.map {
+            listOf("arm64-v8a", "x86_64").map {
                 when (it) {
                     "arm64-v8a" -> "arm64"
                     "armeabi-v7a" -> "arm"
