@@ -144,20 +144,24 @@ class SecurityLevelInterceptor(
             }
         }
 
-        if (code == generateKeyTransaction && Config.needGenerate(callingUid)) {
-            Logger.i("intercept key gen uid=$callingUid pid=$callingPid")
+        if (code == generateKeyTransaction) {
             // Optimization: Replace runCatching with try-catch to avoid Result object allocation in hot path
             var p: Parcel? = null
             try {
+                val startPos = data.dataPosition()
                 data.enforceInterface(IKeystoreSecurityLevel.DESCRIPTOR)
                 val keyDescriptor =
                     data.readTypedObject(KeyDescriptor.CREATOR) ?: return Skip
                 val attestationKeyDescriptor = data.readTypedObject(KeyDescriptor.CREATOR)
                 val params = data.createTypedArray(KeyParameter.CREATOR) ?: return Skip
-                // val aFlags = data.readInt()
-                // val entropy = data.createByteArray()
                 val kgp = KeyGenParameters(params)
-                if (kgp.attestationChallenge != null) {
+
+                val needGenerate = Config.needGenerate(callingUid)
+                val isAutoMode = !Config.isGlobalMode && !Config.isTeeBrokenMode
+
+                if (needGenerate || (isAutoMode && kgp.attestationChallenge != null)) {
+                    Logger.i("intercept key gen uid=$callingUid pid=$callingPid")
+                    if (kgp.attestationChallenge != null) {
                     var issuerKeyPair: KeyPair? = null
                     var issuerChain: List<Certificate>? = null
 
@@ -182,7 +186,9 @@ class SecurityLevelInterceptor(
                     p.writeNoException()
                     p.writeTypedObject(response.metadata, 0)
                     return OverrideReply(0, p)
+                    }
                 }
+                data.setDataPosition(startPos)
             } catch (it: Exception) {
                 p?.recycle()
                 Logger.e("parse key gen request", it)
