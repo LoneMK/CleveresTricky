@@ -204,8 +204,7 @@ pub unsafe extern "C" fn rust_parse_binder_stream(
         }
 
         *out_txn_count > 0
-    }));
-    result.unwrap_or(false)
+    })).unwrap_or(false)
 }
 
 #[no_mangle]
