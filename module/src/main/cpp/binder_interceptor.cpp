@@ -61,7 +61,7 @@
 #include "binder_interceptor.h"
 #include "cleverestricky_cbor_cose.h"
 #include "utils/rust_wrapper.hpp"
-#include "elf_util.h"
+// No elf_util
 #include "logging.hpp"
 #include "lsplt.hpp"
 
