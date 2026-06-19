@@ -17,11 +17,11 @@ pub mod bcc;
 pub mod binder_parser;
 pub mod cbor;
 pub mod cose;
+pub mod elf_util;
 pub mod ffi;
 pub mod fingerprint;
 pub mod properties;
 pub mod utils;
-pub mod elf_util;
 
 pub mod race_engine;
 

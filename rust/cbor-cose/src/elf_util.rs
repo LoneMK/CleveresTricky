@@ -16,7 +16,7 @@ pub unsafe extern "C" fn rust_find_elf_symbol(
 
         let elf_bytes = slice::from_raw_parts(elf_buffer, elf_size);
         let sym_bytes = slice::from_raw_parts(symbol_name, sym_len);
-        
+
         let sym_str = match std::str::from_utf8(sym_bytes) {
             Ok(s) => s,
             Err(_) => return 0,

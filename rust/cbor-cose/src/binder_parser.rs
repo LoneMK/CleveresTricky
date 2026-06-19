@@ -204,7 +204,8 @@ pub unsafe extern "C" fn rust_parse_binder_stream(
         }
 
         *out_txn_count > 0
-    })).unwrap_or(false)
+    }))
+    .unwrap_or(false)
 }
 
 #[no_mangle]
@@ -231,12 +232,14 @@ pub unsafe extern "C" fn rust_parse_binder_parcel(
         for c in target_str.encode_utf16() {
             u16_bytes.extend_from_slice(&c.to_ne_bytes());
         }
-        
+
         if u16_bytes.is_empty() || u16_bytes.len() > parcel_bytes.len() {
             return false;
         }
 
-        parcel_bytes.windows(u16_bytes.len()).any(|window| window == u16_bytes.as_slice())
+        parcel_bytes
+            .windows(u16_bytes.len())
+            .any(|window| window == u16_bytes.as_slice())
     }));
 
     result.unwrap_or(false)
