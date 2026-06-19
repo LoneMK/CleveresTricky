@@ -3320,9 +3320,16 @@ class WebServer(
         }
         fun isSafeHost(host: String?): Boolean {
             if (host == null) return false
-            val colonIdx = host.indexOf(':')
-            val h = (if (colonIdx != -1) host.substring(0, colonIdx) else host).lowercase()
-            return h == "localhost" || h == "127.0.0.1" || h == "[::1]"
+            var h = host
+            if (h.startsWith("[")) {
+                val end = h.indexOf(']')
+                if (end != -1) h = h.substring(1, end)
+            } else {
+                val colonIdx = h.indexOf(':')
+                if (colonIdx != -1) h = h.substring(0, colonIdx)
+            }
+            h = h.lowercase()
+            return h == "localhost" || h == "127.0.0.1" || h == "::1" || h == "0:0:0:0:0:0:0:1"
         }
 
         fun isSafePath(configDir: File, file: File): Boolean {
