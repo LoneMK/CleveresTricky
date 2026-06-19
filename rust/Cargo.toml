@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "cbor-cose",
+    "daemon",
+    "interceptor",
+    "shared"
+]
+resolver = "2"
