@@ -1,9 +1,6 @@
 use libc::{c_int, c_void};
 use log::{error, info, debug};
-use neli::consts::nl::{NlmF, NlmFFlags, Nlmsg};
-use neli::consts::socket::NlFamily;
-use neli::nl::{NlPayload, Nlmsghdr};
-use neli::socket::NlSocketHandle;
+
 use std::os::unix::io::AsRawFd;
 
 // Process Connector constants
