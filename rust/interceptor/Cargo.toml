@@ -12,4 +12,4 @@ libc = "0.2"
 jni = "0.21"
 log = "0.4"
 android_logger = "0.13"
-cleverestricky_cbor_cose = { path = "../cbor-cose" }
+cleverestricky-cbor-cose = { path = "../cbor-cose" }
