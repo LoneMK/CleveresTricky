@@ -60,8 +60,8 @@ pub fn public_key_to_cose_key(key: &VerifyingKey) -> Result<CoseKey, CoseError> 
     // (technically we should parse DER properly, but for P-256 it's fixed offset usually.
     // However, p256 crate provides encoded point directly via `to_encoded_point`)
     let point = key.to_encoded_point(false);
-    let x = point.x().ok_or(CoseError::InvalidPublicKey)?.as_ref();
-    let y = point.y().ok_or(CoseError::InvalidPublicKey)?.as_ref();
+    let x: &[u8] = point.x().ok_or(CoseError::InvalidPublicKey)?;
+    let y: &[u8] = point.y().ok_or(CoseError::InvalidPublicKey)?;
 
     Ok(
         coset::CoseKeyBuilder::new_ec2_pub_key(iana::EllipticCurve::P_256, x.to_vec(), y.to_vec())
