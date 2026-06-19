@@ -16,7 +16,7 @@ pub mod logging {
 pub mod process_util {
     pub fn get_process_name(pid: i32) -> Option<String> {
         let path = format!("/proc/{}/cmdline", pid);
-        if let Ok(mut cmdline) = std::fs::read_to_string(&path) {
+        if let Ok(cmdline) = std::fs::read_to_string(&path) {
             if let Some(first) = cmdline.split('\0').next() {
                 return Some(first.to_string());
             }
