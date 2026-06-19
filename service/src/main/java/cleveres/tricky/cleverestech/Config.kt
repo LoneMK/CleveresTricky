@@ -44,9 +44,11 @@ object Config {
     @Volatile
     private var targetState = TargetState(PackageTrie(), PackageTrie())
     @Volatile
-    private var isGlobalMode = false
+    var isGlobalMode = false
+        private set
     @Volatile
-    private var isTeeBrokenMode = false
+    var isTeeBrokenMode = false
+        private set
     @Volatile
     private var isAutoTeeBroken = false
     private val isTeeBroken get() = isTeeBrokenMode || isAutoTeeBroken

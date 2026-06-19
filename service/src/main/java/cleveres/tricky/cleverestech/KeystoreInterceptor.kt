@@ -37,9 +37,12 @@ object KeystoreInterceptor : BinderInterceptor() {
         if (code == getKeyEntryTransaction) {
             if (CertHack.canHack()) {
                 Logger.d { "intercept pre  $target uid=$callingUid pid=$callingPid dataSz=${data.dataSize()}" }
-                if (Config.needGenerate(callingUid)) {
+                val needGenerate = Config.needGenerate(callingUid)
+                val isAutoMode = !Config.isGlobalMode && !Config.isTeeBrokenMode
+                if (needGenerate || isAutoMode) {
                     // Optimization: Replace runCatching with try-catch to avoid Result object allocation in hot path
                     var p: Parcel? = null
+                    val startPos = data.dataPosition()
                     try {
                         data.enforceInterface(IKeystoreService.DESCRIPTOR)
                         val descriptor =
@@ -54,10 +57,11 @@ object KeystoreInterceptor : BinderInterceptor() {
                         return OverrideReply(0, p)
                     } catch (e: Exception) {
                         p?.recycle()
+                        data.setDataPosition(startPos)
                         // Ignore and fallback to Skip
                     }
                 }
-                else if (Config.needHack(callingUid)) return Continue
+                if (Config.needHack(callingUid)) return Continue
                 return Skip
             }
         }
