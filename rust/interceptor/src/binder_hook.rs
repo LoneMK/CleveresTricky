@@ -1,5 +1,6 @@
 use log::{info, debug, trace, error};
 use crate::parcel_parser::parse_parcel_for_token;
+
 use frida_gum::{Gum, interceptor::Interceptor, Module};
 
 pub fn init_frida_hooks() {
@@ -7,12 +8,12 @@ pub fn init_frida_hooks() {
 
     unsafe {
         let gum = Gum::obtain();
-        let mut interceptor = Interceptor::obtain(&gum);
+        let _interceptor = Interceptor::obtain(&gum);
         
         let libc = Module::find_export_by_name(None, "ioctl");
         
         if let Some(ioctl_addr) = libc {
-            info!("Found ioctl at {:?}", ioctl_addr);
+            info!("Found ioctl at {:?}", ioctl_addr.0);
             // In a full implementation we'd do: interceptor.attach(ioctl_addr, &mut our_listener);
             info!("Frida-Gum ioctl interceptor ready for BINDER_WRITE_READ routing.");
         } else {
@@ -20,7 +21,7 @@ pub fn init_frida_hooks() {
         }
     }
 }
-use crate::parcel_parser::parse_parcel_for_token;
+
 
 const PING_TRANSACTION: u32 = 1599098439; // B_PACK_CHARS('_', 'P', 'N', 'G')
 const INTERFACE_TRANSACTION: u32 = 1598968902; // B_PACK_CHARS('_', 'N', 'T', 'F')
