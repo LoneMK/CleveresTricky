@@ -47,8 +47,6 @@ android {
     buildFeatures {
         prefab = true
     }
-
-
 }
 
 dependencies {}
@@ -137,8 +135,7 @@ tasks.register<Exec>("cargoBuild") {
         "--release",
         "-p",
         "interceptor",
-        "-p",
-        "daemon"
+        "daemon",
     )
 
     doLast {
@@ -146,17 +143,16 @@ tasks.register<Exec>("cargoBuild") {
         // The zip task expects libraries in build/intermediates/stripped_native_libs/.../out/lib/
         // For simplicity, we can copy them to a known directory and adjust the zip task, or 
         // since CMake is completely gone, we can place them directly in the jniLibs equivalent or custom lib dir
-        
         // Let's copy the interceptor .so to where prepareModuleFiles task picks them up
         val abiMap = mapOf(
             "aarch64-linux-android" to "arm64-v8a",
             "armv7-linux-androideabi" to "armeabi-v7a",
             "x86_64-linux-android" to "x86_64",
-            "i686-linux-android" to "x86"
+            "i686-linux-android" to "x86",
         )
-        
+
         val baseTarget = "../rust/target"
-        
+
         abiMap.forEach { (rustAbi, androidAbi) ->
             // Copy interceptor .so
             copy {
@@ -164,7 +160,7 @@ tasks.register<Exec>("cargoBuild") {
                 into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi"))
                 rename { "libcleverestricky.so" }
             }
-            
+
             // Copy daemon executable
             copy {
                 from("$baseTarget/$rustAbi/release/daemon")
