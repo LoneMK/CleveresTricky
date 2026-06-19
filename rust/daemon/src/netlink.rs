@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use libc::{c_int, c_void};
 use log::{error, info, debug};
 

@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use libc::{c_void, pid_t};
 use log::{info, error, debug};
 use std::ffi::CString;
