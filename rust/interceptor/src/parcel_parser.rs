@@ -29,3 +29,60 @@ pub fn parse_parcel_for_token(data: &[u8], target_token: &str) -> bool {
 
     false
 }
+
+/// Safe wrapper around Android Parcel byte streams
+pub struct SafeParcel<'a> {
+    data: &'a [u8],
+    offset: usize,
+}
+
+impl<'a> SafeParcel<'a> {
+    pub fn new(data: &'a [u8]) -> Self {
+        Self { data, offset: 0 }
+    }
+
+    /// Read a 32-bit integer safely
+    pub fn read_i32(&mut self) -> Option<i32> {
+        if self.offset + 4 > self.data.len() {
+            return None;
+        }
+        let bytes: [u8; 4] = self.data[self.offset..self.offset + 4].try_into().unwrap();
+        self.offset += 4;
+        Some(i32::from_ne_bytes(bytes))
+    }
+
+    /// Read a 64-bit integer safely
+    pub fn read_i64(&mut self) -> Option<i64> {
+        if self.offset + 8 > self.data.len() {
+            return None;
+        }
+        let bytes: [u8; 8] = self.data[self.offset..self.offset + 8].try_into().unwrap();
+        self.offset += 8;
+        Some(i64::from_ne_bytes(bytes))
+    }
+
+    /// Read an Android UTF-16 string safely
+    pub fn read_string16(&mut self) -> Option<String> {
+        let length = self.read_i32()?;
+        if length < 0 {
+            return None; // Null string
+        }
+        let byte_len = (length as usize) * 2;
+        if self.offset + byte_len > self.data.len() {
+            return None;
+        }
+        
+        let mut u16_chars = Vec::with_capacity(length as usize);
+        for i in 0..(length as usize) {
+            let start = self.offset + i * 2;
+            let bytes: [u8; 2] = self.data[start..start + 2].try_into().unwrap();
+            u16_chars.push(u16::from_le_bytes(bytes));
+        }
+        
+        // Android pads strings to 4-byte boundaries
+        let pad_len = (byte_len + 3) & !3;
+        self.offset += pad_len;
+        
+        String::from_utf16(&u16_chars).ok()
+    }
+}

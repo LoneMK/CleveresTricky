@@ -4,10 +4,14 @@ use jni::sys::jbyteArray;
 use log::{info, error};
 use shared::logging::init_logger;
 
+pub mod binder_hook;
+pub mod parcel_parser;
+
 #[no_mangle]
 pub extern "system" fn JNI_OnLoad(_vm: jni::JavaVM, _reserved: *mut std::ffi::c_void) -> jni::sys::jint {
     init_logger("CleveresTrickyInterceptor");
     info!("CleveresTricky Rust Interceptor loaded!");
+    binder_hook::init_frida_hooks();
     jni::sys::JNI_VERSION_1_6
 }
 
