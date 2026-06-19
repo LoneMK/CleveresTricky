@@ -132,6 +132,7 @@ open class BinderInterceptor : Binder() {
                 val resultCode = data.readInt()
                 val theData = Parcel.obtain()
                 var theReply: Parcel? = null
+                var localResult: Result = Skip
                 try {
                     val sz = data.readLong().toInt()
                     theData.appendFrom(data, data.dataPosition(), sz)
@@ -143,10 +144,18 @@ open class BinderInterceptor : Binder() {
                         theReply.appendFrom(data, data.dataPosition(), sz2)
                         theReply.setDataPosition(0)
                     }
-                    onPostTransact(target, theCode, theFlags, callingUid, callingPid, theData, theReply, resultCode)
+                    localResult = onPostTransact(target, theCode, theFlags, callingUid, callingPid, theData, theReply, resultCode)
+                    localResult
                 } finally {
-                    theData.recycle()
-                    theReply?.recycle()
+                    // Only recycle if they are not being passed down in an Override result
+                    if (localResult !is OverrideData || (localResult as OverrideData).data !== theData) {
+                        theData.recycle()
+                    }
+                    if (theReply != null) {
+                        if (localResult !is OverrideReply || (localResult as OverrideReply).reply !== theReply) {
+                            theReply.recycle()
+                        }
+                    }
                 }
             }
             3 -> { // INTERCEPTOR_REPLACED
