@@ -28,10 +28,3 @@ goblin = { version = "0.8.0", default-features = false, features = ["elf32", "el
 hex = "0.4"
 rand = "0.9"
 serial_test = "2.0"
-
-[profile.release]
-lto = "fat"
-codegen-units = 1
-strip = true
-opt-level = "z"
-panic = "abort"
