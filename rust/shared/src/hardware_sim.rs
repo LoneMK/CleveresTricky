@@ -7,6 +7,12 @@ pub struct TeeLatencySimulator {
     dist: LogNormal<f64>,
 }
 
+impl Default for TeeLatencySimulator {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TeeLatencySimulator {
     pub fn new() -> Self {
         // Log-normal distribution parameters matching realistic TEE/StrongBox latency
