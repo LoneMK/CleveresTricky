@@ -6,7 +6,8 @@ use frida_gum::{Gum, interceptor::Interceptor, Module};
 pub fn init_frida_hooks() {
     info!("Initializing Frida-Gum Hooks for CleveresTricky...");
 
-    let gum = Gum::obtain();
+    unsafe {
+        let gum = Gum::obtain();
         let _interceptor = Interceptor::obtain(&gum);
         
         let libc = Module::find_export_by_name(None, "ioctl");
@@ -18,6 +19,7 @@ pub fn init_frida_hooks() {
         } else {
             error!("Could not find ioctl export in libc!");
         }
+    }
 }
 
 
