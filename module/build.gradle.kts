@@ -125,12 +125,6 @@ tasks.register<Exec>("cargoBuild") {
         "ndk",
         "-t",
         "arm64-v8a",
-        "-t",
-        "armeabi-v7a",
-        "-t",
-        "x86_64",
-        "-t",
-        "x86",
         "build",
         "--release",
         "-p",
@@ -148,9 +142,6 @@ tasks.register<Exec>("cargoBuild") {
         val abiMap =
             mapOf(
                 "aarch64-linux-android" to "arm64-v8a",
-                "armv7-linux-androideabi" to "armeabi-v7a",
-                "x86_64-linux-android" to "x86_64",
-                "i686-linux-android" to "x86",
             )
 
         val baseTarget = "../rust/target"
