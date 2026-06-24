@@ -1,13 +1,13 @@
 use log::{info, debug, trace, error};
 use crate::parcel_parser::parse_parcel_for_token;
 
-use frida_gum::{Gum, interceptor::Interceptor, Module};
+use frida_gum::{Gum, Module};
 
 pub fn init_frida_hooks() {
     info!("Initializing Frida-Gum Hooks for CleveresTricky...");
 
-    let gum = Gum::obtain();
-        let _interceptor = Interceptor::obtain(&gum);
+    let _gum = Gum::obtain();
+
         
         let libc = Module::find_global_export_by_name("ioctl");
         
