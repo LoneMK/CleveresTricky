@@ -141,7 +141,7 @@ tasks.register<Exec>("cargoBuild") {
         // Let's copy the interceptor .so to where prepareModuleFiles task picks them up
         val abiMap =
             mapOf(
-                "aarch64-linux-android" to "arm64-v8a",
+                "aarch64-linux-android" to "arm64-v8a"
             )
 
         val baseTarget = "../rust/target"
