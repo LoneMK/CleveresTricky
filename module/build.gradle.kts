@@ -153,11 +153,11 @@ tasks.register<Exec>("cargoBuild") {
                 into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi"))
                 rename { "libcleverestricky.so" }
             }
-
             // Copy daemon executable
             copy {
                 from("$baseTarget/$rustAbi/release/daemon")
-                into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi/inject"))
+                into(layout.buildDirectory.dir("rust_outputs/lib/$androidAbi"))
+                rename { "inject" }
             }
         }
     }
