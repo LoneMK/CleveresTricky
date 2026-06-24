@@ -5,24 +5,52 @@ use log::debug;
 /// and locate the UTF-16LE string `android.hardware.drm@1.4::ICrypto` 
 /// or similar tokens for Keystore.
 pub fn parse_parcel_for_token(data: &[u8], target_token: &str) -> bool {
-    if data.len() < target_token.len() * 2 {
+    let target_len = target_token.len() * 2;
+    if data.len() < target_len {
         return false;
     }
 
-    let token_utf16: Vec<u16> = target_token.encode_utf16().collect();
-    // Convert to bytes (UTF-16LE is standard for Android Parcel)
-    let mut token_bytes = Vec::with_capacity(token_utf16.len() * 2);
-    for c in token_utf16 {
-        token_bytes.extend_from_slice(&c.to_le_bytes());
+    // Allocate on the stack instead of heap to avoid Vec overhead
+    // Max typical binder token is ~60 characters (120 bytes)
+    // We use a reasonably small upper bound that fits standard Android tokens
+    let mut token_bytes = [0u8; 128];
+    let mut byte_len = 0;
+
+    for c in target_token.encode_utf16() {
+        if byte_len + 2 > token_bytes.len() {
+            // Token is too large for stack buffer, fallback to allocation-free but slower search
+            let target_len_computed = target_token.encode_utf16().count() * 2;
+            let found = data.windows(target_len_computed).any(|window| {
+                let mut target_iter = target_token.encode_utf16();
+                let mut match_found = true;
+                for i in (0..target_len_computed).step_by(2) {
+                    if let Some(cp) = target_iter.next() {
+                        let b = cp.to_le_bytes();
+                        if window[i] != b[0] || window[i+1] != b[1] {
+                            match_found = false;
+                            break;
+                        }
+                    }
+                }
+                match_found
+            });
+
+            if found {
+                debug!("Found interface token match for: {}", target_token);
+                return true;
+            }
+            return false;
+        }
+        let b = c.to_le_bytes();
+        token_bytes[byte_len] = b[0];
+        token_bytes[byte_len + 1] = b[1];
+        byte_len += 2;
     }
 
-    // A fast zero-copy search through the raw bytes
-    // In a production Binder hook, the InterfaceToken is always preceded by STRICT_MODE_POLICY (u32)
-    // and the string length (u32), so we could parse it exactly to avoid false positives.
-    // For performance, a simple byte-window search is often sufficient if the token is unique enough.
-    
-    // We use a window iterator to find the sequence
-    if let Some(_pos) = data.windows(token_bytes.len()).position(|window| window == token_bytes.as_slice()) {
+    let actual_token_bytes = &token_bytes[..byte_len];
+
+    // A fast zero-copy search through the raw bytes using slice equality
+    if let Some(_pos) = data.windows(actual_token_bytes.len()).position(|window| window == actual_token_bytes) {
         debug!("Found interface token match for: {}", target_token);
         return true;
     }
