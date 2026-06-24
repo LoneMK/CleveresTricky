@@ -15,7 +15,7 @@ Unlike traditional modules that apply static patches, CleveresTricky runs an alw
 - **Self-Healing:** If SELinux contexts are lost after an OTA, the daemon detects and repairs them before every launch. No user action needed.
 - **Adaptive Key Rotation:** Cryptographic keys rotate automatically every 24 hours. If a key is revoked, the system detects it and switches to the next valid key without interruption.
 - **Automated Patch Sync:** When your security patch level falls behind (6+ months), the module updates it automatically to keep attestation passing.
-- **Crash Recovery:** If the daemon crashes, the service restarts it with exponential backoff, logging every event. After exhausting retries, it backs off to prevent boot storms.
+- **Crash Recovery:** If the daemon crashes, the service restarts it with exponential backoff, logging every event. After exhausting retries, it backs off to prevent boot storms. Also support Rust.
 - **Live Configuration:** Changes to config files are detected instantly via FileObserver. No reboot needed.
 - **Stealth Execution:** Property hiding runs inside compiled daemon code, not scannable shell scripts. The process disguises itself to avoid detection by integrity frameworks.
 
