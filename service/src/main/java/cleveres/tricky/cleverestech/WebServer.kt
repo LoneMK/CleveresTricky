@@ -1187,7 +1187,13 @@ class WebServer(
 
         if (uri == "/api/logs" && method == Method.GET) {
             return try {
-                val p = Runtime.getRuntime().exec(arrayOf("logcat", "-d", "-s", "cleverestricky:V"))
+                val type = session.parameters["type"]?.firstOrNull() ?: "cleverestricky"
+                val cmd = when (type) {
+                    "errors" -> arrayOf("logcat", "-d", "-t", "1000", "*:E")
+                    "system" -> arrayOf("logcat", "-d", "-t", "1000")
+                    else -> arrayOf("logcat", "-d", "-s", "cleverestricky:V")
+                }
+                val p = Runtime.getRuntime().exec(cmd)
                 val logs = try {
                     p.inputStream.bufferedReader().use { it.readText() }
                 } catch (e: Exception) {
@@ -1353,7 +1359,7 @@ class WebServer(
         @keyframes spin { to { transform: rotate(360deg); } }
         h1 { text-align: center; font-weight: 200; letter-spacing: 2px; margin: 25px 0; color: var(--accent); font-size: 1.5em; text-transform: uppercase; }
         .tabs { display: flex; justify-content: flex-start; border-bottom: 1px solid var(--border); background: var(--panel); overflow-x: auto; position: sticky; top: 0; z-index: 100; -webkit-overflow-scrolling: touch; }
-        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; }
+        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; flex-shrink: 0; }
         .tab:hover { opacity: 0.9; }
         .tab.active { border-bottom-color: var(--accent); opacity: 1; color: var(--accent); }
         .content { display: none; padding: 20px; max-width: 800px; margin: 0 auto; padding-bottom: 80px; }
@@ -1404,7 +1410,7 @@ class WebServer(
         .res-desc { display: block; font-size: 0.8em; color: #888; margin-top: 4px; line-height: 1.3; }
         .search-container { position: relative; margin-bottom: 10px; }
         .search-container input[type="search"] { width: 100%; padding-right: 44px; }
-        .clear-btn { position: absolute; right: 0; top: 0; bottom: 0; height: 100%; min-height: 44px; min-width: 44px; background: transparent; border: none; color: #888; font-size: 1.2em; padding: 0; cursor: pointer; display: none; touch-action: manipulation; display: flex; align-items: center; justify-content: center; }
+        .clear-btn { position: absolute; right: 0; top: 0; bottom: 0; height: 100%; min-height: 44px; min-width: 44px; background: transparent; border: none; color: #888; font-size: 1.2em; padding: 0; cursor: pointer; display: none; touch-action: manipulation; align-items: center; justify-content: center; }
 
 
 
@@ -1584,8 +1590,8 @@ class WebServer(
     <div id="apps" class="content" role="tabpanel" aria-labelledby="tab_apps">
         <div class="panel">
             <h3>New Rule</h3>
-            <div style="margin-bottom:10px; position:relative;"><label for="appPkg">Package Name</label><input type="text" id="appPkg" placeholder="Type to search packages..." oninput="toggleAddButton(); document.getElementById('clearPkgBtn').style.display=this.value?'block':'none';" onkeydown="if(event.key==='Enter') addAppRule()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" style="padding-right:44px;"><button id="clearPkgBtn" class="clear-btn" onclick="document.getElementById('appPkg').value=''; this.style.display='none'; toggleAddButton(); document.getElementById('appPkg').focus();" >&times;</button></div>
-            <div class="grid-2" style="margin-bottom:10px;"><div><label for="appTemplate">Identity Profile</label><select id="appTemplate"><option value="null">No Identity Spoof</option></select></div><div style="position:relative;"><label for="appKeybox">Custom Keybox</label><input type="text" id="appKeybox" placeholder="Custom Keybox" oninput="document.getElementById('clearKbBtn').style.display=this.value?'block':'none';" onkeydown="if(event.key==='Enter') addAppRule()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" style="padding-right:44px;"><button id="clearKbBtn" class="clear-btn" onclick="document.getElementById('appKeybox').value=''; this.style.display='none'; document.getElementById('appKeybox').focus();" >&times;</button></div></div>
+            <div style="margin-bottom:10px; position:relative;"><label for="appPkg">Package Name</label><input type="text" id="appPkg" placeholder="Type to search packages..." oninput="toggleAddButton(); document.getElementById('clearPkgBtn').style.display=this.value?'flex':'none';" onkeydown="if(event.key==='Enter') addAppRule()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" style="padding-right:44px;"><button id="clearPkgBtn" class="clear-btn" onclick="document.getElementById('appPkg').value=''; this.style.display='none'; toggleAddButton(); document.getElementById('appPkg').focus();" >&times;</button></div>
+            <div class="grid-2" style="margin-bottom:10px;"><div><label for="appTemplate">Identity Profile</label><select id="appTemplate"><option value="null">No Identity Spoof</option></select></div><div style="position:relative;"><label for="appKeybox">Custom Keybox</label><input type="text" id="appKeybox" placeholder="Custom Keybox" oninput="document.getElementById('clearKbBtn').style.display=this.value?'flex':'none';" onkeydown="if(event.key==='Enter') addAppRule()" spellcheck="false" autocomplete="off" autocorrect="off" autocapitalize="off" style="padding-right:44px;"><button id="clearKbBtn" class="clear-btn" onclick="document.getElementById('appKeybox').value=''; this.style.display='none'; document.getElementById('appKeybox').focus();" >&times;</button></div></div>
             <div class="section-header">Blank Permissions (Privacy)</div><div style="display:flex; gap:15px; flex-wrap:wrap;"><div class="row" style="min-height: 44px; display: flex; align-items: center;"><input type="checkbox" id="permContacts" class="toggle"><label for="permContacts" style="padding-left: 10px; min-height: 44px; display: flex; align-items: center; cursor: pointer;">Contacts</label></div><div class="row" style="min-height: 44px; display: flex; align-items: center;"><input type="checkbox" id="permMedia" class="toggle"><label for="permMedia" style="padding-left: 10px; min-height: 44px; display: flex; align-items: center; cursor: pointer;">Media</label></div><div class="row" style="min-height: 44px; display: flex; align-items: center;"><input type="checkbox" id="permMicrophone" class="toggle"><label for="permMicrophone" style="padding-left: 10px; min-height: 44px; display: flex; align-items: center; cursor: pointer;">Microphone</label></div></div>
             <button id="btnAddRule" class="primary" style="width:100%" onclick="addAppRule()" disabled>Add Rule</button>
         </div>
@@ -1720,7 +1726,12 @@ class WebServer(
         <div class="panel">
             <h3>Module Logs</h3>
             <p style="font-size:0.9em; color:#888;">View recent logs from the module. You can also download them for sharing.</p>
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center; flex-wrap: wrap;">
+                <select id="logType" style="flex: 1; min-width: 150px; margin: 0; min-height: 44px; padding: 12px 14px; background: var(--input-bg); border: 1px solid var(--border); color: #fff; border-radius: 6px;" aria-label="Select Log Type">
+                    <option value="cleverestricky">CleveresTricky Logs</option>
+                    <option value="errors">Errors Only</option>
+                    <option value="system">Full System (Recent)</option>
+                </select>
                 <button onclick="runWithState(this, 'Refreshing...', fetchLogs)" class="primary">Refresh Logs</button>
                 <button onclick="downloadLogs()">Download Logs</button>
             </div>
@@ -2093,7 +2104,9 @@ class WebServer(
 
         async function fetchLogs() {
             try {
-                const res = await fetchAuth('/api/logs');
+                const logTypeEl = document.getElementById('logType');
+                const logType = logTypeEl ? logTypeEl.value : 'cleverestricky';
+                const res = await fetchAuth('/api/logs?type=' + encodeURIComponent(logType));
                 if (!res.ok) throw new Error(await res.text());
                 const data = await res.text();
                 const viewer = document.getElementById('logViewer');
@@ -2550,7 +2563,7 @@ class WebServer(
             const list = document.getElementById('storedKeyboxesList');
             const filterInput = document.getElementById('keyboxFilter');
             const clearBtn = document.getElementById('clearKeyboxFilterBtn');
-            if (clearBtn) clearBtn.style.display = (filterInput && filterInput.value) ? 'block' : 'none';
+            if (clearBtn) clearBtn.style.display = (filterInput && filterInput.value) ? 'flex' : 'none';
             const filterText = filterInput ? filterInput.value.toLowerCase() : '';
             if (!list) return;
             list.innerHTML = '';
@@ -2560,7 +2573,7 @@ class WebServer(
                 if (filterText && !k.toLowerCase().includes(filterText)) return;
                 matchCount++;
                 const div = document.createElement('div'); div.className = 'row'; div.style.padding = '10px'; div.style.borderBottom = '1px solid var(--border)';
-                div.innerHTML = `<span>${'$'}{k}</span><div><span style="font-size:0.8em; color:#666; margin-right:15px;">Stored</span><button class="danger" style="padding:8px 16px; font-size:0.85em; min-height:44px;" onclick="const btn = this; requireConfirm(btn, () => runWithState(btn, 'Deleting...', () => deleteKeybox('${'$'}{k}')), 'Confirm Delete')" title="Delete Keybox" aria-label="Delete ${'$'}{k}">Delete</button></div>`;
+                div.innerHTML = `<div style="word-break: break-all; margin-right: 10px; flex: 1;">${'$'}{k}</div><div style="flex-shrink: 0;"><span style="font-size:0.8em; color:#666; margin-right:15px;">Stored</span><button class="danger" style="padding:8px 16px; font-size:0.85em; min-height:44px;" onclick="const btn = this; requireConfirm(btn, () => runWithState(btn, 'Deleting...', () => deleteKeybox('${'$'}{k}')), 'Confirm Delete')" title="Delete Keybox" aria-label="Delete ${'$'}{k}">Delete</button></div>`;
                 list.appendChild(div);
             });
 
@@ -2725,7 +2738,7 @@ class WebServer(
         function renderAppTable() {
             const filterInput = document.getElementById('appFilter');
             const clearBtn = document.getElementById('clearAppFilterBtn');
-            if (clearBtn) clearBtn.style.display = (filterInput && filterInput.value) ? 'block' : 'none';
+            if (clearBtn) clearBtn.style.display = (filterInput && filterInput.value) ? 'flex' : 'none';
             const filter = filterInput ? filterInput.value.toLowerCase() : '';
             const tbody = document.querySelector('#appTable tbody');
             tbody.innerHTML = '';
@@ -3151,7 +3164,7 @@ class WebServer(
 
                 // Single row layout for responsive design
                 tr.innerHTML =
-                    '<td data-label="' + t('col_feature', 'Feature') + '"><div>' + f.name + '</div><div class="res-desc">' + f.desc + '</div></td>' +
+                    '<td data-label="' + t('col_feature', 'Feature') + '"><div><div>' + f.name + '</div><div class="res-desc">' + f.desc + '</div></div></td>' +
                     '<td data-label="' + t('col_status', 'Status') + '">' + statusHtml + '</td>' +
                     '<td data-label="' + t('col_ram', 'Est. RAM') + '" style="font-family:monospace;">' + f.ram + '</td>' +
                     '<td data-label="' + t('col_cpu', 'Est. CPU') + '">' + f.cpu + '</td>' +
