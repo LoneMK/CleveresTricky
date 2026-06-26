@@ -1370,8 +1370,8 @@ class WebServer(
         .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 44px; }
         .row.wrap { flex-wrap: wrap; }
         label { font-size: 0.9em; color: #BBB; cursor: pointer; }
-        input[type="text"], input[type="password"], textarea, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; font-size: 0.95em; min-height: 44px; min-width: 44px; }
-        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; }
+        input[type="text"], input[type="password"], input[type="search"], textarea, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; font-size: 0.95em; min-height: 44px; min-width: 44px; }
+        input[type="text"]:focus, input[type="password"]:focus, input[type="search"]:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; }
         button { background: var(--border); border: none; color: var(--fg); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.95em; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; min-height: 44px; min-width: 44px; touch-action: manipulation; }
         button:hover { background: #444; }
         button:active { transform: scale(0.98); }
