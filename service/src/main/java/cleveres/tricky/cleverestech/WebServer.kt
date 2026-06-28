@@ -556,7 +556,7 @@ class WebServer(
         val contentLengthStr = headers["content-length"] ?: headers["Content-Length"]
         if (contentLengthStr != null) {
             val contentLength = contentLengthStr.toLongOrNull() ?: 0L
-            if (contentLength > 5 * 1024 * 1024) {
+            if (contentLength > MAX_UPLOAD_SIZE) {
                 Logger.e("WebServer: Request too large, blocking to prevent resource exhaustion (Firewall)")
                 return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Payload Too Large")
             }

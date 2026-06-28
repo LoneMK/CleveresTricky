@@ -60,8 +60,8 @@ class WebServerMissingContentLengthTest {
 
         val chunk = "a".repeat(1024)
         try {
-            // Write 6MB
-            for (i in 0 until 6 * 1024) {
+            // Write 11MB
+            for (i in 0 until 11 * 1024) {
                 writer.write(chunk)
             }
             writer.flush()

@@ -47,8 +47,8 @@ class WebServerDosTest {
         val writer = socket.getOutputStream().writer(Charsets.UTF_8)
         val reader = socket.getInputStream().bufferedReader(Charsets.UTF_8)
 
-        // Claim 6MB payload
-        val payloadSize = 6 * 1024 * 1024
+        // Claim 11MB payload
+        val payloadSize = 11 * 1024 * 1024
         writer.write("POST /api/upload_keybox?token=$token HTTP/1.1\r\n")
         writer.write("Host: localhost:$port\r\n")
         writer.write("Content-Length: $payloadSize\r\n")
