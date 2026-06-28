@@ -1,4 +1,4 @@
-use jni::JNIEnv;
+
 use jni::objects::JClass;
 use jni::sys::jbyteArray;
 use log::{info, error};
@@ -24,10 +24,11 @@ pub extern "system" fn JNI_OnLoad(_vm: jni::JavaVM, _reserved: *mut std::ffi::c_
 
 #[no_mangle]
 pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createProtectedDataNatively<'local>(
-    env: JNIEnv<'local>,
+    mut unowned_env: jni::EnvUnowned<'local>,
     _class: JClass<'local>,
 ) -> jbyteArray {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        let mut env = unowned_env.with_env();
         info!("Executing RKP Spoofing entirely in Native Rust!");
 
         // Fake ECC coordinates (32 bytes) and HMAC key
