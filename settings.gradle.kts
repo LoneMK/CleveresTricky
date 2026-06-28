@@ -24,10 +24,10 @@ gradle.rootProject {
     allprojects {
         buildscript.configurations.all {
             resolutionStrategy {
-                force("io.netty:netty-codec-http:4.1.135.Final")
-                force("io.netty:netty-codec-http2:4.1.135.Final")
-                force("io.netty:netty-codec:4.1.135.Final")
-                force("io.netty:netty-handler-proxy:4.1.135.Final")
+                force("io.netty:netty-codec-http:4.2.15.Final")
+                force("io.netty:netty-codec-http2:4.2.15.Final")
+                force("io.netty:netty-codec:4.2.15.Final")
+                force("io.netty:netty-handler-proxy:4.2.15.Final")
                 force("org.bouncycastle:bcpkix-jdk18on:1.84")
                 force("org.bouncycastle:bcprov-jdk18on:1.84")
                 force("ch.qos.logback:logback-core:1.5.37")
@@ -36,10 +36,10 @@ gradle.rootProject {
         }
         configurations.all {
             resolutionStrategy {
-                force("io.netty:netty-codec-http:4.1.135.Final")
-                force("io.netty:netty-codec-http2:4.1.135.Final")
-                force("io.netty:netty-codec:4.1.135.Final")
-                force("io.netty:netty-handler-proxy:4.1.135.Final")
+                force("io.netty:netty-codec-http:4.2.15.Final")
+                force("io.netty:netty-codec-http2:4.2.15.Final")
+                force("io.netty:netty-codec:4.2.15.Final")
+                force("io.netty:netty-handler-proxy:4.2.15.Final")
                 force("org.bouncycastle:bcpkix-jdk18on:1.84")
                 force("org.bouncycastle:bcprov-jdk18on:1.84")
                 force("ch.qos.logback:logback-core:1.5.37")
