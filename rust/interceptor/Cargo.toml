@@ -9,7 +9,7 @@ crate-type = ["cdylib"]
 [dependencies]
 shared = { path = "../shared" }
 libc = "0.2"
-jni = "0.21"
+jni = "0.22"
 log = "0.4"
 android_logger = "0.15"
 cleverestricky-cbor-cose = { path = "../cbor-cose" }
