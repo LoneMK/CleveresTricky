@@ -24,26 +24,26 @@ gradle.rootProject {
     allprojects {
         buildscript.configurations.all {
             resolutionStrategy {
-                force("io.netty:netty-codec-http:4.1.118.Final")
-                force("io.netty:netty-codec-http2:4.1.118.Final")
-                force("io.netty:netty-codec:4.1.118.Final")
-                force("io.netty:netty-handler-proxy:4.1.118.Final")
-                force("org.bouncycastle:bcpkix-jdk18on:1.80")
-                force("org.bouncycastle:bcprov-jdk18on:1.80")
-                force("ch.qos.logback:logback-core:1.5.16")
-                force("ch.qos.logback:logback-classic:1.5.16")
+                force("io.netty:netty-codec-http:4.1.135.Final")
+                force("io.netty:netty-codec-http2:4.1.135.Final")
+                force("io.netty:netty-codec:4.1.135.Final")
+                force("io.netty:netty-handler-proxy:4.1.135.Final")
+                force("org.bouncycastle:bcpkix-jdk18on:1.84")
+                force("org.bouncycastle:bcprov-jdk18on:1.84")
+                force("ch.qos.logback:logback-core:1.5.25")
+                force("ch.qos.logback:logback-classic:1.5.25")
             }
         }
         configurations.all {
             resolutionStrategy {
-                force("io.netty:netty-codec-http:4.1.118.Final")
-                force("io.netty:netty-codec-http2:4.1.118.Final")
-                force("io.netty:netty-codec:4.1.118.Final")
-                force("io.netty:netty-handler-proxy:4.1.118.Final")
-                force("org.bouncycastle:bcpkix-jdk18on:1.80")
-                force("org.bouncycastle:bcprov-jdk18on:1.80")
-                force("ch.qos.logback:logback-core:1.5.16")
-                force("ch.qos.logback:logback-classic:1.5.16")
+                force("io.netty:netty-codec-http:4.1.135.Final")
+                force("io.netty:netty-codec-http2:4.1.135.Final")
+                force("io.netty:netty-codec:4.1.135.Final")
+                force("io.netty:netty-handler-proxy:4.1.135.Final")
+                force("org.bouncycastle:bcpkix-jdk18on:1.84")
+                force("org.bouncycastle:bcprov-jdk18on:1.84")
+                force("ch.qos.logback:logback-core:1.5.25")
+                force("ch.qos.logback:logback-classic:1.5.25")
             }
         }
     }
