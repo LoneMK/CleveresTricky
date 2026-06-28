@@ -243,8 +243,6 @@ object TelephonyInterceptor : BinderInterceptor() {
                 }
 
                 val modulePath = getModulePath()
-                val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                 val p = ProcessBuilder(
                     "$modulePath/inject",
                     pid.toString(),

@@ -208,13 +208,12 @@ object KeystoreInterceptor : BinderInterceptor() {
                     return false
                 }
                 Logger.i("found keystore2 at pid=$pid, injecting libcleverestricky.so ...")
-                val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-                val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
-                val injectPath = "${getModuleDir()}/inject"
+                val modulePath = getModuleDir()
+                val injectPath = "$modulePath/inject"
                 val p = ProcessBuilder(
                     injectPath,
                     pid.toString(),
-                    "libcleverestricky.so",
+                    "$modulePath/libcleverestricky.so",
                     "entry"
                 ).redirectOutput(java.io.File("/dev/null"))
                  .redirectError(java.io.File("/dev/null"))

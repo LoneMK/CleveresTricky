@@ -303,8 +303,6 @@ object DrmInterceptor : BinderInterceptor() {
                 Logger.d("DRM: Injecting PID=$pid with $modulePath/libcleverestricky.so")
                 Thread {
                     try {
-                        val allowedAbis = setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-                        val abi = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in allowedAbis } ?: "arm64-v8a"
                         val p = ProcessBuilder(
                             "$modulePath/inject",
                             pid.toString(),
