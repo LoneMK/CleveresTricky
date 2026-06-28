@@ -119,6 +119,18 @@ tasks.register<Exec>("cargoBuild") {
     // Treat Rust warnings as errors
     environment("RUSTFLAGS", "-D warnings")
 
+    doFirst {
+        if (!isWindowsHost) {
+            Runtime.getRuntime().exec(
+                arrayOf(
+                    "sh",
+                    "-c",
+                    "find ~/.cargo/registry/src/ -name lib.rs | grep frida-build | xargs sed -i 's/armhf/arm/g' || true",
+                ),
+            ).waitFor()
+        }
+    }
+
     // Using cargo-ndk to build the interceptor lib for all supported ABIs.
     commandLine(
         "cargo",
