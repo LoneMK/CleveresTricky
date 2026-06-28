@@ -603,7 +603,9 @@ class WebServer(
                       val isMultipart = contentType.contains("multipart/form-data", ignoreCase = true)
                       val maxSize = if (isMultipart) MAX_UPLOAD_SIZE else MAX_BODY_SIZE
                       if (contentLen > maxSize) return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Payload too large")
-                  } catch (e: Exception) {}
+                  } catch (e: NumberFormatException) {
+                      return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Invalid Content-Length")
+                  }
              } else {
                  return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Content-Length required")
              }

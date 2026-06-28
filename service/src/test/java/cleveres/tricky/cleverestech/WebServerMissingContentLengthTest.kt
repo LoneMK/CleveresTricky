@@ -86,4 +86,40 @@ class WebServerMissingContentLengthTest {
             socket.close()
         }
     }
+
+    @Test
+    fun testInvalidContentLength() {
+        val port = server.listeningPort
+        val token = server.token
+        val socket = Socket("localhost", port)
+        socket.soTimeout = 2000
+
+        val writer = socket.getOutputStream().writer(Charsets.UTF_8)
+        val reader = socket.getInputStream().bufferedReader(Charsets.UTF_8)
+
+        writer.write("POST /api/upload_keybox?token=$token HTTP/1.1\r\n")
+        writer.write("Host: localhost:$port\r\n")
+        writer.write("Content-Length: not_a_number\r\n")
+        writer.write("Content-Type: application/x-www-form-urlencoded\r\n")
+        writer.write("\r\n")
+        writer.write("filename=test.xml&content=start")
+        writer.flush()
+
+        try {
+            val line = reader.readLine()
+            if (line == null) {
+                 org.junit.Assert.fail("Server closed connection without response")
+            } else {
+                 if (line.contains("400")) {
+                     // Success
+                 } else {
+                     org.junit.Assert.fail("Expected 400 response but got: $line")
+                 }
+            }
+        } catch (e: Exception) {
+            // connection reset is fine for bad request
+        } finally {
+            socket.close()
+        }
+    }
 }
