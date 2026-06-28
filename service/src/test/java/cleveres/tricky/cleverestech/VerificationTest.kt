@@ -41,41 +41,25 @@ class VerificationTest {
 
     @Test
     fun testVerificationPasses() {
-        var exitCode = -1
-        Verification.exitProcessImpl = { exitCode = it }
-
-        Verification.check(tempDir)
-
-        assertEquals(-1, exitCode)
+        assertTrue(Verification.check(tempDir))
     }
 
     @Test
     fun testVerificationFailsOnModifiedFile() {
-        var exitCode = -1
-        Verification.exitProcessImpl = { exitCode = it }
-
         // Modify file
         File(tempDir, "test.sh").writeText("modified content")
 
-        Verification.check(tempDir)
+        assertFalse(Verification.check(tempDir))
 
-        // Now it should NOT exit
-        assertEquals(-1, exitCode)
         // And NOT create disable file
         assertFalse(File(tempDir, "disable").exists())
     }
 
     @Test
     fun testVerificationFailsOnMissingChecksum() {
-        var exitCode = -1
-        Verification.exitProcessImpl = { exitCode = it }
-
         // Remove checksum
         File(tempDir, "test.sh.sha256").delete()
 
-        Verification.check(tempDir)
-
-        // Now it should NOT exit
-        assertEquals(-1, exitCode)
+        assertFalse(Verification.check(tempDir))
     }
 }
