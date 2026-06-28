@@ -156,7 +156,16 @@ jobs:
         run: ./gradlew :module:testDebugUnitTest
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest
+        run: ./gradlew testDebugUnitTest --info 2>&1 | tail -200
+
+      - name: Upload Test Reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports
+          path: |
+            **/build/reports/tests/
+            **/build/test-results/
 
       - name: Build Android Artifacts
         run: |
