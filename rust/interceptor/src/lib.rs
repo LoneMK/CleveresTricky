@@ -28,7 +28,6 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
     _class: JClass<'local>,
 ) -> jbyteArray {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        let mut env = unowned_env.with_env();
         info!("Executing RKP Spoofing entirely in Native Rust!");
 
         // Fake ECC coordinates (32 bytes) and HMAC key
@@ -36,41 +35,41 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
         let y = vec![0x02; 32];
         let hmac_key = vec![0xAA; 32];
 
-        // Generate COSE_Mac0 structure using our memory-safe Rust library
-        let maced_key = match cleverestricky_cbor_cose::cose::generate_maced_public_key(&x, &y, &hmac_key) {
-            Ok(k) => k,
-            Err(e) => {
-                error!("Failed to generate MACed public key: {}", e);
-                return std::ptr::null_mut();
+        let arr_ptr = unowned_env.with_env(|mut env| {
+            let maced_key = match cleverestricky_cbor_cose::cose::generate_maced_public_key(&x, &y, &hmac_key) {
+                Ok(k) => k,
+                Err(e) => {
+                    error!("Failed to generate MACed public key: {}", e);
+                    return std::ptr::null_mut();
+                }
+            };
+
+            let device_info = cleverestricky_cbor_cose::cose::create_device_info_cbor(
+                Some(std::borrow::Cow::Borrowed("google")),
+                Some(std::borrow::Cow::Borrowed("Google")),
+                Some(std::borrow::Cow::Borrowed("husky")),
+                Some(std::borrow::Cow::Borrowed("Pixel 8 Pro")),
+                Some(std::borrow::Cow::Borrowed("husky")),
+            );
+
+            let challenge = b"cleveres_tricky_rkp_bypass";
+
+            let cbor_payload = cleverestricky_cbor_cose::cose::create_certificate_request_response(
+                &[maced_key],
+                challenge,
+                &device_info,
+            );
+
+            match env.byte_array_from_slice(&cbor_payload) {
+                Ok(arr) => **arr,
+                Err(e) => {
+                    error!("Failed to create JNI byte array: {:?}", e);
+                    std::ptr::null_mut()
+                }
             }
-        };
-
-        // Build the attestation DeviceInfo
-        let device_info = cleverestricky_cbor_cose::cose::create_device_info_cbor(
-            Some(std::borrow::Cow::Borrowed("google")),
-            Some(std::borrow::Cow::Borrowed("Google")),
-            Some(std::borrow::Cow::Borrowed("husky")),
-            Some(std::borrow::Cow::Borrowed("Pixel 8 Pro")),
-            Some(std::borrow::Cow::Borrowed("husky")),
-        );
-
-        // Mock challenge
-        let challenge = b"cleveres_tricky_rkp_bypass";
-
-        // Create the final certificate request response
-        let cbor_payload = cleverestricky_cbor_cose::cose::create_certificate_request_response(
-            &[maced_key],
-            challenge,
-            &device_info,
-        );
-
-        match env.byte_array_from_slice(&cbor_payload) {
-            Ok(arr) => **arr,
-            Err(e) => {
-                error!("Failed to create JNI byte array: {:?}", e);
-                std::ptr::null_mut()
-            }
-        }
+        });
+        
+        arr_ptr
     }));
     result.unwrap_or(std::ptr::null_mut())
 }
