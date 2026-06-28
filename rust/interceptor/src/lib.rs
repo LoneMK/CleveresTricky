@@ -35,7 +35,7 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
         let y = vec![0x02; 32];
         let hmac_key = vec![0xAA; 32];
 
-        let arr_ptr = unowned_env.with_env(|mut env| {
+        let arr_ptr = match unowned_env.with_env(|mut env| {
             let maced_key = match cleverestricky_cbor_cose::cose::generate_maced_public_key(&x, &y, &hmac_key) {
                 Ok(k) => k,
                 Err(e) => {
@@ -67,7 +67,10 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
                     Ok(std::ptr::null_mut())
                 }
             }
-        }).unwrap_or(std::ptr::null_mut());
+        }).into_outcome() {
+            jni::env::Outcome::Ok(val) => val,
+            _ => std::ptr::null_mut(),
+        };
         
         arr_ptr
     }));
