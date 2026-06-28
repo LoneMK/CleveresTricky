@@ -8,7 +8,7 @@ pub mod binder_hook;
 pub mod parcel_parser;
 
 #[no_mangle]
-pub extern "system" fn JNI_OnLoad(_vm: jni::JavaVM, _reserved: *mut std::ffi::c_void) -> jni::sys::jint {
+pub extern "system" fn JNI_OnLoad(_vm: *mut jni::sys::JavaVM, _reserved: *mut std::ffi::c_void) -> jni::sys::jint {
     let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         init_logger("CleveresTrickyInterceptor");
         info!("CleveresTricky Rust Interceptor loaded!");
@@ -35,7 +35,7 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
         let y = vec![0x02; 32];
         let hmac_key = vec![0xAA; 32];
 
-        let arr_ptr = match unowned_env.with_env(|mut env| -> Result<jbyteArray, jni::errors::Error> {
+        let arr_ptr = match unowned_env.with_env(|env| -> Result<jbyteArray, jni::errors::Error> {
             let maced_key = match cleverestricky_cbor_cose::cose::generate_maced_public_key(&x, &y, &hmac_key) {
                 Ok(k) => k,
                 Err(e) => {
