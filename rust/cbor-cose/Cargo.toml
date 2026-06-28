@@ -27,5 +27,5 @@ goblin = { version = "0.8.0", default-features = false, features = ["elf32", "el
 [dev-dependencies]
 hex = "0.4"
 rand = "0.9"
-serial_test = "2.0"
+serial_test = "3.5"
 
