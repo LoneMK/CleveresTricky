@@ -2,7 +2,6 @@ package cleveres.tricky.cleverestech
 
 import java.io.File
 import java.security.MessageDigest
-import kotlin.system.exitProcess
 
 object Verification {
     private val MODULE_PATH = getModuleDir()
