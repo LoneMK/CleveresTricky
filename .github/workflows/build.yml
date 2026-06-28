@@ -212,7 +212,7 @@ jobs:
       - name: "📝 Build Changelog"
         if: steps.check_release.outputs.create_release == 'true'
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v5
+        uses: mikepenz/release-changelog-builder-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
