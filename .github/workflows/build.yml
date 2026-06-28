@@ -52,7 +52,7 @@ jobs:
       RUSTFLAGS: "-D warnings"
     defaults:
       run:
-        working-directory: rust/cbor-cose
+        working-directory: rust
     steps:
       - name: Check out
         uses: actions/checkout@v7
@@ -66,8 +66,8 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            rust/cbor-cose/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/cbor-cose/Cargo.lock') }}
+            rust/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('rust/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-
 
