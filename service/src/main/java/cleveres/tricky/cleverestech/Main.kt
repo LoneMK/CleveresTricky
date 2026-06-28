@@ -12,8 +12,10 @@ private const val RKP_KEY_MODE = 384
 
 fun main(args: Array<String>) {
     Logger.i("Welcome to Service!")
-    Verification.check()
-
+    val isTampered = !Verification.check()
+    if (isTampered) {
+        Logger.e("TAMPER DETECTED: Disabling all interceptors and running in safe mode.")
+    }
     // Start Auto Cleaner
     KeyboxAutoCleaner.start()
 
@@ -28,7 +30,7 @@ fun main(args: Array<String>) {
         // succeeds, so that action.sh can always open the correct URL.
         try {
             Logger.d("Main: Preparing WebUI config directory at ${configDir.absolutePath}")
-            val server = WebServer(WEB_UI_PORT, configDir)
+            val server = WebServer(WEB_UI_PORT, configDir, isTampered)
             Logger.d("Main: Starting WebUI server bootstrap on requested port $WEB_UI_PORT")
             try {
                 server.startAsync()
@@ -68,6 +70,15 @@ fun main(args: Array<String>) {
             }
         } catch (e: Exception) {
             Logger.e("Failed to start web server", e)
+        }
+
+        // If tampered, we stop here. We only serve the WebUI warning page.
+        if (isTampered) {
+            Logger.e("Main: Running in Tamper-Lockdown mode. Keystore/Telephony/DRM hooks will NOT be registered.")
+            // Keep the daemon alive just to serve the WebUI
+            while (true) {
+                delay(60000)
+            }
         }
 
         // === Config Initialization ===

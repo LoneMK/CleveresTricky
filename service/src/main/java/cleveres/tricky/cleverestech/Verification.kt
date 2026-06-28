@@ -6,15 +6,13 @@ import kotlin.system.exitProcess
 
 object Verification {
     private val MODULE_PATH = getModuleDir()
-    private val IGNORED_FILES = setOf("disable", "remove", "update", "system.prop", "sepolicy.rule")
-
-    var exitProcessImpl: (Int) -> Unit = { exitProcess(it) }
+    private val IGNORED_FILES = setOf("disable", "remove", "update", "system.prop", "sepolicy.rule", "tampered", "web_port", "init.rc", "init.rc.disabled")
 
     @OptIn(ExperimentalStdlibApi::class)
-    fun check(root: File = File(MODULE_PATH)) {
+    fun check(root: File = File(MODULE_PATH)): Boolean {
         if (!root.exists()) {
             Logger.e("Module directory not found: ${root.absolutePath}")
-            return
+            return true // Allow dev mode when run outside Magisk
         }
 
         val allFiles = root.walk().filter { !it.isDirectory }.toList()
@@ -24,6 +22,8 @@ object Verification {
                 it.path.removeSuffix(".sha256") to it.readText().trim()
             }
 
+        var isTampered = false
+
         allFiles.forEach { file ->
             // Skip checksum files themselves
             if (file.name.endsWith(".sha256")) return@forEach
@@ -32,17 +32,26 @@ object Verification {
 
             val expected = checksumMap[file.path]
             if (expected == null) {
-                fail(root, "Missing checksum for file: ${file.path}")
+                Logger.e("Verification failed: Missing checksum for file: ${file.path}")
+                isTampered = true
                 return@forEach
             }
 
             val actual = calculateChecksum(file)
             if (!expected.equals(actual, ignoreCase = true)) {
-                fail(root, "Checksum mismatch for file: ${file.path}. Expected $expected, got $actual")
+                Logger.e("Verification failed: Checksum mismatch for file: ${file.path}. Expected $expected, got $actual")
+                isTampered = true
                 return@forEach
             }
         }
+        
+        if (isTampered) {
+            Logger.e("Module verification failed. Tampering detected.")
+            return false
+        }
+        
         Logger.i("Module verification passed.")
+        return true
     }
 
     @OptIn(ExperimentalStdlibApi::class)
@@ -52,11 +61,5 @@ object Verification {
             md.update(buffer, 0, bytesRead)
         }
         return md.digest().toHexString(HexFormat.Default)
-    }
-
-    private fun fail(root: File, reason: String) {
-        Logger.e("Verification failed (ignored): $reason")
-        // File(root, "disable").createNewFile()
-        // exitProcessImpl(1)
     }
 }

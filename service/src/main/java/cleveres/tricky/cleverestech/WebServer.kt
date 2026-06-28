@@ -119,6 +119,7 @@ private const val WEB_UI_READINESS_CONNECT_TIMEOUT_MS = 250
 class WebServer(
     private val requestedPort: Int,
     private val configDir: File,
+    private val isTampered: Boolean = false,
     private val permissionSetter: (File, Int) -> Unit = { f, m ->
         try {
             Os.chmod(f.absolutePath, m)
@@ -283,13 +284,39 @@ class WebServer(
         }
     }
 
+    private fun getModuleDir(): File {
+        val paths = listOf(
+            "/data/adb/modules/cleverestricky",
+            "/data/adb/ksu/modules/cleverestricky",
+            "/data/adb/ap/modules/cleverestricky"
+        )
+        for (p in paths) {
+            val f = File(p)
+            if (f.exists() && f.isDirectory) return f
+        }
+        return File("/data/adb/modules/cleverestricky")
+    }
+
     private fun isValidSetting(name: String): Boolean {
-        return name in setOf("global_mode", "tee_broken_mode", "rkp_bypass", "auto_beta_fetch", "auto_keybox_check", "random_on_boot", "drm_fix", "random_drm_on_boot", "auto_patch_update", "hide_sensitive_props", "spoof_region_cn", "remove_magisk_32", "spoof_build", "spoof_build_ps", "spoof_props", "spoof_provider", "spoof_signature", "spoof_sdk_ps", "spoof_location", "imei_global", "network_global")
+        return name in setOf("global_mode", "tee_broken_mode", "rkp_bypass", "auto_beta_fetch", "auto_keybox_check", "random_on_boot", "drm_fix", "random_drm_on_boot", "auto_patch_update", "hide_sensitive_props", "spoof_region_cn", "remove_magisk_32", "spoof_build", "spoof_build_ps", "spoof_props", "spoof_provider", "spoof_signature", "spoof_sdk_ps", "spoof_location", "imei_global", "network_global", "init_rc_injection")
     }
 
     private fun toggleFile(filename: String, enable: Boolean): Boolean {
         if (!isValidSetting(filename)) return false
         synchronized(fileLock) {
+            if (filename == "init_rc_injection") {
+                val modDir = getModuleDir()
+                val target = File(modDir, "init.rc")
+                val source = File(modDir, "init.rc.disabled")
+                if (enable) {
+                    if (source.exists()) source.copyTo(target, overwrite = true)
+                    else target.writeText("on boot\n    setprop ro.boot.verifiedbootstate green\n    setprop ro.boot.flash.locked 1\n    setprop ro.boot.veritymode enforcing\n    setprop ro.boot.vbmeta.device_state locked\n    setprop ro.boot.warranty_bit 0\n    setprop ro.secure 1\n    setprop ro.debuggable 0\n    setprop ro.adb.secure 1\n    setprop ro.build.type user\n    setprop ro.build.tags release-keys\n    setprop sys.oem_unlock_allowed 0\n")
+                } else {
+                    if (target.exists()) target.delete()
+                }
+                return true
+            }
+
             val f = getSafeFile(configDir, filename)
             if (f == null) return false
             return try {
@@ -539,7 +566,23 @@ class WebServer(
              if (origin != allowedOrigin && origin != allowedSecureOrigin) return secureResponse(Response.Status.FORBIDDEN, "text/plain", "CSRF Forbidden")
         }
 
-        if (uri == "/" || uri == "/index.html") return secureResponse(Response.Status.OK, "text/html", htmlBytes)
+        if (uri == "/" || uri == "/index.html") {
+            if (isTampered) {
+                val warningHtml = """
+                    <!DOCTYPE html>
+                    <html>
+                    <head><title>Tamper Warning</title></head>
+                    <body style="font-family: sans-serif; padding: 20px; background: #fff3f3; color: #d00;">
+                        <h1>Module Modified / Tampering Detected</h1>
+                        <p>This module has been modified and is therefore dangerous. Please use the official version from GitHub:</p>
+                        <p><a href="https://github.com/tryigit/CleveresTricky/">https://github.com/tryigit/CleveresTricky/</a></p>
+                    </body>
+                    </html>
+                """.trimIndent()
+                return secureResponse(Response.Status.FORBIDDEN, "text/html", warningHtml.toByteArray())
+            }
+            return secureResponse(Response.Status.OK, "text/html", htmlBytes)
+        }
 
         if (method == Method.POST || method == Method.PUT) {
              val lenStr = headers["content-length"]
@@ -583,6 +626,7 @@ class WebServer(
             json.put("hide_sensitive_props", fileExists("hide_sensitive_props"))
             json.put("spoof_region_cn", fileExists("spoof_region_cn"))
             json.put("remove_magisk_32", fileExists("remove_magisk_32"))
+            json.put("init_rc_injection", File(getModuleDir(), "init.rc").exists())
             json.put("spoof_build", fileExists("spoof_build"))
             json.put("spoof_build_ps", fileExists("spoof_build_ps"))
             json.put("spoof_props", fileExists("spoof_props"))
@@ -1493,6 +1537,7 @@ class WebServer(
         <div class="panel">
             <h3>System Control</h3>
             <div class="row"><label for="global_mode">Global Mode</label><input type="checkbox" class="toggle" id="global_mode" onchange="toggle('global_mode')"></div>
+            <div class="row"><label for="init_rc_injection">Init.rc Injection</label><input type="checkbox" class="toggle" id="init_rc_injection" onchange="toggle('init_rc_injection')"></div>
             <div class="row"><label for="tee_broken_mode">TEE Broken Mode</label><input type="checkbox" class="toggle" id="tee_broken_mode" onchange="toggle('tee_broken_mode')"></div>
             <div class="row"><label for="rkp_bypass">RKP Bypass (Strong)</label><input type="checkbox" class="toggle" id="rkp_bypass" onchange="toggle('rkp_bypass')"></div>
             <div class="row"><label for="auto_beta_fetch">Auto Beta Fetch</label><input type="checkbox" class="toggle" id="auto_beta_fetch" onchange="toggle('auto_beta_fetch')"></div>
@@ -2361,7 +2406,7 @@ class WebServer(
                     if (!res.ok) throw new Error(await res.text());
                 const data = await res.json();
                 console.log('[CleveresTricky] config loaded:', JSON.stringify({rkp_bypass: data.rkp_bypass, global_mode: data.global_mode, keybox_count: data.keybox_count, tee_broken_mode: data.tee_broken_mode}));
-                ['global_mode', 'tee_broken_mode', 'rkp_bypass', 'auto_beta_fetch', 'auto_keybox_check', 'random_on_boot', 'drm_fix', 'random_drm_on_boot', 'auto_patch_update', 'hide_sensitive_props', 'spoof_region_cn', 'remove_magisk_32', 'spoof_location', 'imei_global', 'network_global'].forEach(k => {
+                ['global_mode', 'tee_broken_mode', 'rkp_bypass', 'auto_beta_fetch', 'auto_keybox_check', 'random_on_boot', 'drm_fix', 'random_drm_on_boot', 'auto_patch_update', 'hide_sensitive_props', 'spoof_region_cn', 'remove_magisk_32', 'spoof_location', 'imei_global', 'network_global', 'init_rc_injection'].forEach(k => {
                     if(document.getElementById(k)) document.getElementById(k).checked = data[k];
                 });
                 determineActiveProfile(data);

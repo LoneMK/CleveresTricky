@@ -277,17 +277,15 @@ object KeystoreInterceptor : BinderInterceptor() {
             Logger.i("no StrongBox SecurityLevel found!")
         }
         
-        // Register RKP interceptor for STRONG integrity
-        if (Config.shouldBypassRkp()) {
-            val rkp = findRemotelyProvisionedComponent()
-            if (rkp != null) {
-                Logger.i("register for RemotelyProvisionedComponent!")
-                val interceptor = RkpInterceptor(rkp, SecurityLevel.TRUSTED_ENVIRONMENT)
-                registerBinderInterceptor(bd, rkp.asBinder(), interceptor, RkpInterceptor.INTERCEPTED_CODES)
-                rkpInterceptor = interceptor
-            } else {
-                Logger.i("no RemotelyProvisionedComponent found (RKP bypass enabled but HAL not available)")
-            }
+        // Register RKP interceptor for Mode 1 (Blocking) and Mode 2 (Spoofing)
+        val rkp = findRemotelyProvisionedComponent()
+        if (rkp != null) {
+            Logger.i("register for RemotelyProvisionedComponent!")
+            val interceptor = RkpInterceptor(rkp, SecurityLevel.TRUSTED_ENVIRONMENT)
+            registerBinderInterceptor(bd, rkp.asBinder(), interceptor, RkpInterceptor.INTERCEPTED_CODES)
+            rkpInterceptor = interceptor
+        } else {
+            Logger.i("no RemotelyProvisionedComponent found (HAL not available)")
         }
         
         return true

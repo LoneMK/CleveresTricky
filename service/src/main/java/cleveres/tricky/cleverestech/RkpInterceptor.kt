@@ -34,6 +34,7 @@ class RkpInterceptor(
             getTransactCode(IRemotelyProvisionedComponent.Stub::class.java, "generateCertificateRequestV2")
 
         val INTERCEPTED_CODES = intArrayOf(
+            getHardwareInfoTransaction,
             generateEcdsaP256KeyPairTransaction,
             generateCertificateRequestTransaction,
             generateCertificateRequestV2Transaction
@@ -59,7 +60,15 @@ class RkpInterceptor(
         callingPid: Int,
         data: Parcel
     ): Result {
-        if (!Config.shouldBypassRkp()) return Skip
+        if (!Config.shouldBypassRkp()) {
+            // MODE 1: Strong General Simulation Mode (Legacy Keybox Fallback)
+            // Block all RKP calls by returning UNKNOWN_TRANSACTION (2147483646)
+            Logger.i("RKP is blocked (Mode 1), forcing Legacy Keybox fallback for uid=$callingUid")
+            val p = Parcel.obtain()
+            return OverrideReply(2147483646, p)
+        }
+        
+        // MODE 2: Advanced RKP Compatibility Mode (Spoofing)
         
         when (code) {
             getHardwareInfoTransaction -> {

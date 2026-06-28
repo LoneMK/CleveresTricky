@@ -40,8 +40,9 @@ pub fn filter_transaction(code: u32, parcel_data: &[u8]) -> TransactionAction {
 
     // 2. Check if it's a known Keystore/KeyMint target
     if parse_parcel_for_token(parcel_data, "android.hardware.security.keymint.IKeyMintDevice") ||
-       parse_parcel_for_token(parcel_data, "android.system.keystore2.IKeystoreService") {
-        debug!("Native Filtering: Forwarding KeyMint/Keystore transaction to Rust/JNI backend");
+       parse_parcel_for_token(parcel_data, "android.system.keystore2.IKeystoreService") ||
+       parse_parcel_for_token(parcel_data, "android.hardware.security.rkp.IRemotelyProvisionedComponent") {
+        debug!("Native Filtering: Forwarding Keystore/KeyMint/RKP transaction to Rust/JNI backend");
         return TransactionAction::ForwardToJni;
     }
 

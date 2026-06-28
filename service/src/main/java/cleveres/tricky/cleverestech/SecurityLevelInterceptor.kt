@@ -45,6 +45,10 @@ class SecurityLevelInterceptor(
 
         fun getKeyResponse(uid: Int, alias: String): KeyEntryResponse? =
             keys[Key(uid, alias)]?.response
+
+        fun clearCache() {
+            keys.clear()
+        }
     }
 
     data class Key(val uid: Int, val alias: String)

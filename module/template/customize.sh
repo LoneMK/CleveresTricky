@@ -80,6 +80,7 @@ extract "$ZIPFILE" 'daemon'          "$MODPATH"
 chmod 755 "$MODPATH/daemon"
 extract "$ZIPFILE" 'action.sh'       "$MODPATH"
 chmod 755 "$MODPATH/action.sh"
+extract "$ZIPFILE" 'init.rc.disabled' "$MODPATH"
 
 case "$ARCH" in
   "x64")
