@@ -161,7 +161,7 @@ class WebServerHtmlTest {
         assertTrue("Missing disabled toggle CSS", html.contains("input[type=\"checkbox\"].toggle:disabled { opacity: 0.5; cursor: not-allowed; }"))
 
         // Verify Label Cursor CSS
-        assertTrue("Missing label cursor CSS", html.contains("label { font-size: 0.9em; color: #BBB; cursor: pointer; }"))
+        assertTrue("Missing label cursor CSS", html.contains("label { font-size: 0.95em; color: #BBB; cursor: pointer; }"))
 
         // Verify Disabled Attributes Removed (Enabled now)
         assertTrue("Contacts Checkbox is missing", html.contains("id=\"permContacts\""))
