@@ -1,10 +1,10 @@
 #![allow(unused)]
-use log::{info, error, debug};
+use log::{debug, error, info};
 use shared::logging::init_logger;
 use std::os::unix::process::CommandExt;
 
-mod netlink;
 mod injector;
+mod netlink;
 
 fn main() {
     init_logger("CleveresTrickyDaemon");
@@ -18,7 +18,10 @@ fn main() {
 
     // Set process name
     unsafe {
-        libc::prctl(libc::PR_SET_NAME, c"kworker/u0:0-events".as_ptr() as *const libc::c_char);
+        libc::prctl(
+            libc::PR_SET_NAME,
+            c"kworker/u0:0-events".as_ptr() as *const libc::c_char,
+        );
     }
 
     // Start Netlink Process Connector monitoring

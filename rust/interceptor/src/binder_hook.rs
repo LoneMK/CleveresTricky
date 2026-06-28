@@ -1,5 +1,5 @@
-use log::{info, debug, trace, error};
 use crate::parcel_parser::parse_parcel_for_token;
+use log::{debug, error, info, trace};
 
 use frida_gum::{Gum, Module};
 
@@ -8,18 +8,16 @@ pub fn init_frida_hooks() {
 
     let _gum = Gum::obtain();
 
-        
-        let libc = Module::find_global_export_by_name("ioctl");
-        
-        if let Some(ioctl_addr) = libc {
-            info!("Found ioctl at {:?}", ioctl_addr.0);
-            // In a full implementation we'd do: interceptor.attach(ioctl_addr, &mut our_listener);
-            info!("Frida-Gum ioctl interceptor ready for BINDER_WRITE_READ routing.");
-        } else {
-            error!("Could not find ioctl export in libc!");
-        }
-}
+    let libc = Module::find_global_export_by_name("ioctl");
 
+    if let Some(ioctl_addr) = libc {
+        info!("Found ioctl at {:?}", ioctl_addr.0);
+        // In a full implementation we'd do: interceptor.attach(ioctl_addr, &mut our_listener);
+        info!("Frida-Gum ioctl interceptor ready for BINDER_WRITE_READ routing.");
+    } else {
+        error!("Could not find ioctl export in libc!");
+    }
+}
 
 const PING_TRANSACTION: u32 = 1599098439; // B_PACK_CHARS('_', 'P', 'N', 'G')
 const INTERFACE_TRANSACTION: u32 = 1598968902; // B_PACK_CHARS('_', 'N', 'T', 'F')
@@ -33,15 +31,24 @@ pub enum TransactionAction {
 pub fn filter_transaction(code: u32, parcel_data: &[u8]) -> TransactionAction {
     // 1. Drop trivial transactions natively (PING / INTERFACE)
     if code == PING_TRANSACTION || code == INTERFACE_TRANSACTION {
-        trace!("Native Filtering: Intercepted trivial transaction code {}", code);
+        trace!(
+            "Native Filtering: Intercepted trivial transaction code {}",
+            code
+        );
         // Return a basic BR_REPLY payload natively
-        return TransactionAction::ReplyNatively(vec![0; 4]); 
+        return TransactionAction::ReplyNatively(vec![0; 4]);
     }
 
     // 2. Check if it's a known Keystore/KeyMint target
-    if parse_parcel_for_token(parcel_data, "android.hardware.security.keymint.IKeyMintDevice") ||
-       parse_parcel_for_token(parcel_data, "android.system.keystore2.IKeystoreService") ||
-       parse_parcel_for_token(parcel_data, "android.hardware.security.rkp.IRemotelyProvisionedComponent") {
+    if parse_parcel_for_token(
+        parcel_data,
+        "android.hardware.security.keymint.IKeyMintDevice",
+    ) || parse_parcel_for_token(parcel_data, "android.system.keystore2.IKeystoreService")
+        || parse_parcel_for_token(
+            parcel_data,
+            "android.hardware.security.rkp.IRemotelyProvisionedComponent",
+        )
+    {
         debug!("Native Filtering: Forwarding Keystore/KeyMint/RKP transaction to Rust/JNI backend");
         return TransactionAction::ForwardToJni;
     }

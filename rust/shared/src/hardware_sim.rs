@@ -1,7 +1,7 @@
-use rand_distr::{LogNormal, Distribution};
-use std::time::Duration;
-use std::thread;
 use log::debug;
+use rand_distr::{Distribution, LogNormal};
+use std::thread;
+use std::time::Duration;
 
 pub struct TeeLatencySimulator {
     dist: LogNormal<f64>,
@@ -26,12 +26,15 @@ impl TeeLatencySimulator {
     pub fn emulate_crypto_latency(&self) {
         let mut rng = rand::thread_rng();
         let delay_ms = self.dist.sample(&mut rng);
-        
+
         // Cap the delay to avoid watchdog timeouts (e.g., max 500ms)
         // and ensure a minimum latency of 80ms.
         let delay_ms = delay_ms.clamp(80.0, 500.0) as u64;
-        
-        debug!("TeeLatencySimulator: Injecting {} ms delay to emulate TEE crypto", delay_ms);
+
+        debug!(
+            "TeeLatencySimulator: Injecting {} ms delay to emulate TEE crypto",
+            delay_ms
+        );
         thread::sleep(Duration::from_millis(delay_ms));
     }
 }

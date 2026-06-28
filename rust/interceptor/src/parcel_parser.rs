@@ -2,7 +2,7 @@ use log::debug;
 
 /// Zero-copy parcel parser to dynamically find InterfaceToken.
 /// Instead of hardcoding `txn->code == 17`, we parse the ioctl buffer
-/// and locate the UTF-16LE string `android.hardware.drm@1.4::ICrypto` 
+/// and locate the UTF-16LE string `android.hardware.drm@1.4::ICrypto`
 /// or similar tokens for Keystore.
 pub fn parse_parcel_for_token(data: &[u8], target_token: &str) -> bool {
     let target_len = target_token.len() * 2;
@@ -26,7 +26,7 @@ pub fn parse_parcel_for_token(data: &[u8], target_token: &str) -> bool {
                 for i in (0..target_len_computed).step_by(2) {
                     if let Some(cp) = target_iter.next() {
                         let b = cp.to_le_bytes();
-                        if window[i] != b[0] || window[i+1] != b[1] {
+                        if window[i] != b[0] || window[i + 1] != b[1] {
                             match_found = false;
                             break;
                         }
@@ -50,7 +50,10 @@ pub fn parse_parcel_for_token(data: &[u8], target_token: &str) -> bool {
     let actual_token_bytes = &token_bytes[..byte_len];
 
     // A fast zero-copy search through the raw bytes using slice equality
-    if let Some(_pos) = data.windows(actual_token_bytes.len()).position(|window| window == actual_token_bytes) {
+    if let Some(_pos) = data
+        .windows(actual_token_bytes.len())
+        .position(|window| window == actual_token_bytes)
+    {
         debug!("Found interface token match for: {}", target_token);
         return true;
     }
@@ -99,18 +102,18 @@ impl<'a> SafeParcel<'a> {
         if self.offset + byte_len > self.data.len() {
             return None;
         }
-        
+
         let mut u16_chars = Vec::with_capacity(length as usize);
         for i in 0..(length as usize) {
             let start = self.offset + i * 2;
             let bytes: [u8; 2] = self.data[start..start + 2].try_into().unwrap();
             u16_chars.push(u16::from_le_bytes(bytes));
         }
-        
+
         // Android pads strings to 4-byte boundaries
         let pad_len = (byte_len + 3) & !3;
         self.offset += pad_len;
-        
+
         String::from_utf16(&u16_chars).ok()
     }
 }

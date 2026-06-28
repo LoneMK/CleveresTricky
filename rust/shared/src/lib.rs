@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
 pub mod logging {
-    use log::LevelFilter;
     use android_logger::Config;
+    use log::LevelFilter;
 
     pub fn init_logger(tag: &str) {
         android_logger::init_once(
