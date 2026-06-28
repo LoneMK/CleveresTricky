@@ -80,6 +80,11 @@ jobs:
       - name: Run tests
         run: cargo test --verbose
 
+      - name: Security Audit
+        run: |
+          cargo install cargo-audit
+          cargo audit
+
   # ============================================================
   # Phase 2: Build & Release
   # ============================================================
