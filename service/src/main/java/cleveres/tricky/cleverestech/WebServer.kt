@@ -1402,8 +1402,9 @@ class WebServer(
         #islandText { flex: 1; }
         @keyframes spin { to { transform: rotate(360deg); } }
         h1 { text-align: center; font-weight: 200; letter-spacing: 2px; margin: 25px 0; color: var(--accent); font-size: 1.5em; text-transform: uppercase; }
-        .tabs { display: flex; justify-content: flex-start; border-bottom: 1px solid var(--border); background: var(--panel); overflow-x: auto; position: sticky; top: 0; z-index: 100; -webkit-overflow-scrolling: touch; }
-        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 44px; min-width: 44px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; flex-shrink: 0; }
+        .tabs { display: flex; justify-content: flex-start; border-bottom: 1px solid var(--border); background: var(--panel); overflow-x: auto; position: sticky; top: 0; z-index: 100; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .tabs::-webkit-scrollbar { display: none; }
+        .tab { padding: 15px 20px; cursor: pointer; border-bottom: 2px solid transparent; opacity: 0.6; transition: all 0.2s; white-space: nowrap; font-size: 0.9em; letter-spacing: 1px; min-height: 48px; min-width: 48px; align-items: center; justify-content: center; box-sizing: border-box; display: inline-flex; flex-shrink: 0; }
         .tab:hover { opacity: 0.9; }
         .tab.active { border-bottom-color: var(--accent); opacity: 1; color: var(--accent); }
         .content { display: none; padding: 20px; max-width: 800px; margin: 0 auto; padding-bottom: 80px; }
@@ -1411,9 +1412,9 @@ class WebServer(
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h3 { margin-top: 0; font-weight: 500; color: var(--accent); font-size: 1.1em; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; }
-        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; min-height: 44px; }
+        .row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; min-height: 48px; }
         .row.wrap { flex-wrap: wrap; }
-        label { font-size: 0.9em; color: #BBB; cursor: pointer; }
+        label { font-size: 0.95em; color: #BBB; cursor: pointer; }
         input[type="text"], input[type="password"], input[type="search"], textarea, select { background: var(--input-bg); border: 1px solid var(--border); color: #fff; padding: 12px 14px; border-radius: 6px; width: 100%; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; font-size: 0.95em; min-height: 44px; min-width: 44px; }
         input[type="text"]:focus, input[type="password"]:focus, input[type="search"]:focus, textarea:focus, select:focus { border-color: var(--accent); outline: none; }
         button { background: var(--border); border: none; color: var(--fg); padding: 12px 24px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 500; font-size: 0.95em; transition: all 0.2s; text-transform: uppercase; letter-spacing: 0.5px; min-height: 44px; min-width: 44px; touch-action: manipulation; }
@@ -1474,20 +1475,23 @@ class WebServer(
         .pwd-toggle:hover { color: #fff; background: transparent; }
         @media screen and (max-width: 600px) {
             .grid-2 { grid-template-columns: 1fr; }
-            .content { padding: 12px; padding-bottom: 80px; }
-            .panel { padding: 14px; margin-bottom: 14px; }
+            .content { padding: 12px; padding-bottom: 100px; }
+            .panel { padding: 16px; margin-bottom: 16px; border-radius: 16px; }
             h1 { font-size: 1.2em; margin: 15px 0; }
-            .tabs { gap: 0; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding: 0 4px; }
-            .tab { scroll-snap-align: start; padding: 12px 14px; font-size: 0.82em;  min-width: 44px; }
-            .row { flex-wrap: wrap; gap: 8px; }
+            .tabs { gap: 0; padding: 0; }
+            .tab { scroll-snap-align: start; padding: 16px; font-size: 0.9em; min-width: 60px; border-bottom-width: 3px; }
+            .row { flex-wrap: wrap; gap: 10px; }
             .responsive-table thead { display: none; }
-            .responsive-table tr { display: block; border: 1px solid var(--border); margin-bottom: 10px; border-radius: 8px; background: #1a1a1a; }
-            .responsive-table td { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #333; padding: 12px; min-height: 40px; }
-            .responsive-table td:last-child { border-bottom: none; }
-            .responsive-table td::before { content: attr(data-label); color: #888; font-weight: 500; margin-right: 10px; min-width: 100px; display: inline-block; }
+            .responsive-table tr { display: flex; flex-direction: column; border: 1px solid var(--border); margin-bottom: 16px; border-radius: 12px; background: #1a1a1a; overflow: hidden; }
+            .responsive-table td { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2a2a2a; padding: 16px; min-height: 48px; }
+            .responsive-table td:last-child { border-bottom: none; background: rgba(0,0,0,0.2); }
+            .responsive-table td::before { content: attr(data-label); color: #888; font-weight: 500; margin-right: 12px; min-width: 110px; font-size: 0.9em; }
             .responsive-table td > div, .responsive-table td > span { text-align: right; flex: 1; word-break: break-word; }
-            .server-item { flex-direction: column; align-items: flex-start; gap: 8px; }
-            .server-item > div:last-child { width: 100%; display: flex; justify-content: flex-end; }
+            .server-item { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
+            .server-item > div:last-child { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+            input[type="text"], input[type="password"], input[type="search"], textarea, select, button { font-size: 16px; } /* Prevents iOS zoom */
+            .resource-summary { flex-direction: column; gap: 10px; }
+            .resource-stat { width: 100%; text-align: center; }
         }
     </style>
 </head>
@@ -1712,24 +1716,30 @@ class WebServer(
     </div>
 
     <div id="info" class="content" role="tabpanel" aria-labelledby="tab_info">
-        <div class="panel">
-            <h3 data-i18n="resource_monitor_title">Resource Monitor</h3>
-            <p style="font-size:0.9em; color:#888;">Monitor resource usage and manage feature impact. <span style="color:var(--danger)">Disabling security features may expose your device.</span></p>
-            <table id="resourceTable" class="responsive-table">
-                <thead>
-                    <tr>
-                        <th data-i18n="col_feature">Feature</th>
-                        <th data-i18n="col_status">Status</th>
-                        <th data-i18n="col_ram">Est. RAM</th>
-                        <th data-i18n="col_cpu">Est. CPU</th>
-                        <th data-i18n="col_security">Security Impact</th>
-                    </tr>
-                </thead>
-                <tbody id="resourceBody">
-                </tbody>
-            </table>
-            <div style="margin-top:10px; font-size:0.8em; color:#666;">
-                * RAM estimates are approximate based on loaded objects.
+        <div class="panel" style="background:var(--bg); border:none; padding:0; box-shadow:none;">
+            <div id="resourceSummary" class="resource-summary" style="display:flex; justify-content:space-around; align-items:center; background:#1a1a1a; padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+                <div style="color:#888;">Loading resource usage...</div>
+            </div>
+            
+            <div class="panel">
+                <h3 data-i18n="resource_monitor_title">Resource Monitor</h3>
+                <p style="font-size:0.9em; color:#888;">Monitor resource usage and manage feature impact. <span style="color:var(--danger)">Disabling security features may expose your device.</span></p>
+                <table id="resourceTable" class="responsive-table">
+                    <thead>
+                        <tr>
+                            <th data-i18n="col_feature">Feature</th>
+                            <th data-i18n="col_status">Status</th>
+                            <th data-i18n="col_ram">Est. RAM</th>
+                            <th data-i18n="col_cpu">Est. CPU</th>
+                            <th data-i18n="col_security">Security Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resourceBody">
+                    </tbody>
+                </table>
+                <div style="margin-top:15px; font-size:0.85em; color:#666; text-align:center;">
+                    * RAM estimates are approximate based on loaded objects.
+                </div>
             </div>
         </div>
     </div>
@@ -3173,13 +3183,17 @@ class WebServer(
             if (!tbody) return;
             tbody.innerHTML = '';
 
-            const totalRow = document.createElement('tr');
+            const summaryDiv = document.getElementById('resourceSummary');
             const ramMb = (data.real_ram_kb / 1024).toFixed(2);
             const cpu = data.real_cpu ? data.real_cpu.toFixed(1) : "0.0";
             const env = data.environment || "Unknown";
 
-            totalRow.innerHTML = '<td colspan="5" style="background:#222; font-weight:bold; padding:10px;">Env: ' + env + ' | CPU: ' + cpu + '% | RAM: ' + ramMb + ' MB</td>';
-            tbody.appendChild(totalRow);
+            if (summaryDiv) {
+                summaryDiv.innerHTML = 
+                    '<div class="resource-stat"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Environment</div><div style="font-size:1.2em; font-weight:bold; color:var(--accent);">' + env + '</div></div>' +
+                    '<div class="resource-stat" style="border-left:1px solid var(--border); border-right:1px solid var(--border); padding:0 20px;"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Est. CPU</div><div style="font-size:1.2em; font-weight:bold; color:var(--success);">' + cpu + '%</div></div>' +
+                    '<div class="resource-stat"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Est. RAM</div><div style="font-size:1.2em; font-weight:bold; color:#60A5FA;">' + ramMb + ' MB</div></div>';
+            }
 
             const keyboxRam = (data.keybox_count * 0.01).toFixed(2);
             const appConfigRam = (data.app_config_size / 1024).toFixed(2);
