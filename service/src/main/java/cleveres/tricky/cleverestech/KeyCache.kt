@@ -16,4 +16,8 @@ internal class KeyCache<K, V>(private val maxEntries: Int) {
     }
 
     fun values(): Collection<V> = map.values
+
+    fun clear() {
+        map.clear()
+    }
 }

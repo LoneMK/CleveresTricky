@@ -359,7 +359,7 @@ object Config {
         Logger.i("RKP bypass is ${if (isRkpBypass) "enabled" else "disabled"} (file=${f?.absolutePath}, exists=${f?.exists()})")
         if (previousValue != isRkpBypass) {
             Logger.i("RKP bypass state changed: $previousValue -> $isRkpBypass")
-            cleveres.tricky.cleverestech.keystore.SecurityLevelInterceptor.clearCache()
+            cleveres.tricky.cleverestech.SecurityLevelInterceptor.clearCache()
         }
     }
 
