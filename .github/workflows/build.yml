@@ -156,7 +156,22 @@ jobs:
         run: ./gradlew :module:testDebugUnitTest
 
       - name: Run Unit Tests
-        run: ./gradlew testDebugUnitTest --info 2>&1 | tail -200
+        run: ./gradlew testDebugUnitTest || true
+
+      - name: Print Failed Test Details
+        if: always()
+        run: |
+          echo "=== Searching for failed tests ==="
+          find . -path "*/test-results/*" -name "*.xml" -exec grep -l 'failures="[1-9]' {} \; | while read f; do
+            echo "=== FAILED TEST FILE: $f ==="
+            cat "$f"
+          done
+          # Also check if there were actual failures
+          FAILED=$(find . -path "*/test-results/*" -name "*.xml" -exec grep -l 'failures="[1-9]' {} \;)
+          if [ -n "$FAILED" ]; then
+            echo "::error::There were failing tests!"
+            exit 1
+          fi
 
       - name: Upload Test Reports
         if: always()
