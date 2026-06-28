@@ -212,31 +212,39 @@ jobs:
       - name: "📝 Build Changelog"
         if: steps.check_release.outputs.create_release == 'true'
         id: build_changelog
-        uses: mikepenz/release-changelog-builder-action@v6
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          configurationJson: |
-            {
-              "template": "#{{CHANGELOG}}",
-              "pr_template": "- #{{TITLE}} (#{{NUMBER}})",
-              "commit_template": "- #{{MESSAGE}}",
-              "empty_template": "- No notable changes",
-              "categories": [
-                {
-                  "title": "## 🚀 Features",
-                  "labels": ["feature", "enhancement"]
-                },
-                {
-                  "title": "## 🐛 Bug Fixes",
-                  "labels": ["bug", "fix"]
-                },
-                {
-                  "title": "## 🧰 Maintenance",
-                  "labels": ["chore", "maintenance", "dependencies"]
-                }
-              ]
-            }
+        run: |
+          PREV_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$PREV_TAG" ]; then
+              git log --pretty=format:"%s" > raw_commits.txt
+          else
+              git log ${PREV_TAG}..HEAD --pretty=format:"%s" > raw_commits.txt
+          fi
+          
+          python3 -c '
+          import re
+          from collections import defaultdict
+          
+          groups = defaultdict(list)
+          for line in open("raw_commits.txt"):
+              line = line.strip()
+              if not line: continue
+              match = re.search(r"^(.*)\s+\(#(\d+)\)$", line)
+              if match:
+                  msg = match.group(1).strip()
+                  num = match.group(2)
+                  groups[msg].append(num)
+              else:
+                  groups[line].append(None)
+          
+          with open("CHANGELOG.md", "w", encoding="utf-8") as f:
+              f.write("## 🚀 Changes\n")
+              for msg, nums in groups.items():
+                  nums = [n for n in nums if n]
+                  if nums:
+                      f.write("- " + msg + " (#" + ", #".join(nums) + ")\n")
+                  else:
+                      f.write("- " + msg + "\n")
+          '
 
       - name: Create Tag & Release
         if: steps.check_release.outputs.create_release == 'true'
@@ -244,7 +252,7 @@ jobs:
         with:
           tag_name: "V${{ env.VERSION }}"
           name: "Release V${{ env.VERSION }}"
-          body: ${{steps.build_changelog.outputs.changelog}}
+          body_path: CHANGELOG.md
           files: |
             module/release/*-release.zip
             module/release/*-debug.zip

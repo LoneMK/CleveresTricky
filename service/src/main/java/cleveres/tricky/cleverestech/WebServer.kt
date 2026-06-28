@@ -552,6 +552,16 @@ class WebServer(
         val method = session.method
         val headers = session.headers
 
+        // Security Firewall: Prevent resource exhaustion DoS by limiting payload size (max 5MB)
+        val contentLengthStr = headers["content-length"] ?: headers["Content-Length"]
+        if (contentLengthStr != null) {
+            val contentLength = contentLengthStr.toLongOrNull() ?: 0L
+            if (contentLength > 5 * 1024 * 1024) {
+                Logger.e("WebServer: Request too large, blocking to prevent resource exhaustion (Firewall)")
+                return secureResponse(Response.Status.BAD_REQUEST, "text/plain", "Payload Too Large")
+            }
+        }
+
         if (!isSafeHost(headers["host"])) return secureResponse(Response.Status.FORBIDDEN, "text/plain", "Invalid Host header")
 
         var ip = session.remoteIpAddress ?: "unknown"
@@ -1473,6 +1483,9 @@ class WebServer(
         .pwd-wrapper input { margin-bottom: 0 !important; padding-right: 60px; }
         .pwd-toggle { position: absolute; right: 5px; background: transparent; border: none; color: var(--accent); cursor: pointer; font-size: 0.85em; padding: 5px 10px; min-height: 44px; min-width: 44px; text-transform: none; touch-action: manipulation; }
         .pwd-toggle:hover { color: #fff; background: transparent; }
+        .resource-summary { display: flex; justify-content: space-around; align-items: center; background: #1a1a1a; padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .resource-stat { text-align: center; padding: 10px; flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .resource-stat-mid { border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
         @media screen and (max-width: 600px) {
             .grid-2 { grid-template-columns: 1fr; }
             .content { padding: 12px; padding-bottom: 100px; }
@@ -1490,8 +1503,9 @@ class WebServer(
             .server-item { flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; }
             .server-item > div:last-child { width: 100%; display: flex; justify-content: space-between; align-items: center; }
             input[type="text"], input[type="password"], input[type="search"], textarea, select, button { font-size: 16px; } /* Prevents iOS zoom */
-            .resource-summary { flex-direction: column; gap: 10px; }
-            .resource-stat { width: 100%; text-align: center; }
+            .resource-summary { flex-direction: column; gap: 10px; background: transparent; border: none; padding: 0; box-shadow: none; }
+            .resource-stat { width: 100%; padding: 15px; background: #1a1a1a; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 5px; flex-direction: row; justify-content: space-between; }
+            .resource-stat-mid { border-left: none; border-right: none; }
         }
     </style>
 </head>
@@ -1717,7 +1731,7 @@ class WebServer(
 
     <div id="info" class="content" role="tabpanel" aria-labelledby="tab_info">
         <div class="panel" style="background:var(--bg); border:none; padding:0; box-shadow:none;">
-            <div id="resourceSummary" class="resource-summary" style="display:flex; justify-content:space-around; align-items:center; background:#1a1a1a; padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom:20px;">
+            <div id="resourceSummary" class="resource-summary">
                 <div style="color:#888;">Loading resource usage...</div>
             </div>
             
@@ -3191,7 +3205,7 @@ class WebServer(
             if (summaryDiv) {
                 summaryDiv.innerHTML = 
                     '<div class="resource-stat"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Environment</div><div style="font-size:1.2em; font-weight:bold; color:var(--accent);">' + env + '</div></div>' +
-                    '<div class="resource-stat" style="border-left:1px solid var(--border); border-right:1px solid var(--border); padding:0 20px;"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Est. CPU</div><div style="font-size:1.2em; font-weight:bold; color:var(--success);">' + cpu + '%</div></div>' +
+                    '<div class="resource-stat resource-stat-mid"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Est. CPU</div><div style="font-size:1.2em; font-weight:bold; color:var(--success);">' + cpu + '%</div></div>' +
                     '<div class="resource-stat"><div style="font-size:0.8em; color:#888; text-transform:uppercase;">Est. RAM</div><div style="font-size:1.2em; font-weight:bold; color:#60A5FA;">' + ramMb + ' MB</div></div>';
             }
 
