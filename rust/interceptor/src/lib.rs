@@ -40,7 +40,7 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
                 Ok(k) => k,
                 Err(e) => {
                     error!("Failed to generate MACed public key: {}", e);
-                    return std::ptr::null_mut();
+                    return Ok(std::ptr::null_mut());
                 }
             };
 
@@ -61,13 +61,13 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
             );
 
             match env.byte_array_from_slice(&cbor_payload) {
-                Ok(arr) => **arr,
+                Ok(arr) => Ok(**arr),
                 Err(e) => {
                     error!("Failed to create JNI byte array: {:?}", e);
-                    std::ptr::null_mut()
+                    Ok(std::ptr::null_mut())
                 }
             }
-        });
+        }).unwrap_or(std::ptr::null_mut());
         
         arr_ptr
     }));
