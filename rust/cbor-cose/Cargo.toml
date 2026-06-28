@@ -22,7 +22,7 @@ p256 = { version = "0.13", features = ["arithmetic", "ecdsa", "std"] }
 rand_core = { version = "0.6", features = ["std"] }
 libc = "0.2"
 rustc-hash = "2.1.2"
-goblin = { version = "0.8.0", default-features = false, features = ["elf32", "elf64", "endian_fd"] }
+goblin = { version = "0.10.7", default-features = false, features = ["elf32", "elf64", "endian_fd"] }
 
 [dev-dependencies]
 hex = "0.4"
