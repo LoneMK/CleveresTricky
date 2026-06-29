@@ -69,7 +69,7 @@ pub extern "system" fn Java_cleveres_tricky_cleverestech_RkpInterceptor_createPr
                     );
 
                 match env.byte_array_from_slice(&cbor_payload) {
-                    Ok(arr) => Ok(**arr),
+                    Ok(arr) => Ok(arr.into_raw()),
                     Err(e) => {
                         error!("Failed to create JNI byte array: {:?}", e);
                         Ok(std::ptr::null_mut())
