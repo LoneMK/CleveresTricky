@@ -15,9 +15,9 @@ fingerprint = ["dep:minreq"]
 
 [dependencies]
 hmac = "0.12"
-sha2 = "0.10"
+sha2 = "0.11"
 minreq = { version = "3.0", features = ["https-rustls"], optional = true }
-coset = "0.3"
+coset = "0.4"
 p256 = { version = "0.13", features = ["arithmetic", "ecdsa", "std"] }
 rand_core = { version = "0.9", features = ["std"] }
 libc = "0.2"
@@ -26,6 +26,6 @@ goblin = { version = "0.10.7", default-features = false, features = ["elf32", "e
 
 [dev-dependencies]
 hex = "0.4"
-rand = "0.8"
+rand = "0.9"
 serial_test = "3.5"
 
