@@ -18,7 +18,7 @@ pub fn generate_hardware_backed_simulation() -> Result<Vec<u8>, CoseError> {
     let key_bytes = hw_cose_key.to_vec().map_err(|_| CoseError::EncodingError)?;
 
     let exploit_payload = CborValue::Array(vec![
-        CborValue::TextString("TEE_SIMULATION".to_string().into()),
+        CborValue::TextString(std::borrow::Cow::Borrowed("TEE_SIMULATION")),
         CborValue::ByteString(key_bytes.into()),
         CborValue::UnsignedInt(9999), // Fake TEE Version
     ]);
