@@ -2350,7 +2350,8 @@ class WebServer(
 
                 // 2. Upload
                 const dz = document.getElementById('dropZoneContent');
-                dz.innerHTML = '<div style="font-size: 1.5em; margin-bottom: 10px; color:var(--success); font-weight:bold;">OK</div>';
+                const tempDiv = document.createElement('div'); tempDiv.innerText = file.name; const safeFileName = tempDiv.innerHTML;
+                dz.innerHTML = '<div style="font-size: 1.2em; margin-bottom: 10px; color:var(--accent); font-weight:bold;">Uploading: ' + safeFileName + '...</div>';
                 document.getElementById('dropZone').style.borderColor = 'var(--success)';
 
                 const formData = new FormData();
@@ -2366,6 +2367,7 @@ class WebServer(
                         loadKeyboxes();
                         return;
                     }
+                    dz.innerHTML = '<div style="font-size: 1.5em; margin-bottom: 10px; color:var(--success); font-weight:bold;">OK - ' + safeFileName + '</div>';
                     notify('Uploaded Successfully', 'normal');
                     document.getElementById('kbContent').value = '';
                     try {
