@@ -1405,6 +1405,7 @@ class WebServer(
         .island.error #islandText { color: #FECACA; }
         .spinner { width: 14px; height: 14px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; margin-right: 10px; display: none; }
         .island.working .spinner { display: block; }
+        .inline-spinner { width: 18px; height: 18px; border: 2px solid var(--accent); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; display: inline-block; vertical-align: middle; margin-right: 10px; }
         .error-icon { display: none; margin-right: 10px; color: var(--danger); font-size: 1.2em; font-weight: bold; }
         .island.error .error-icon { display: block; }
         .success-icon { display: none; margin-right: 10px; color: var(--success); font-size: 1.2em; font-weight: bold; }
@@ -2351,7 +2352,7 @@ class WebServer(
                 // 2. Upload
                 const dz = document.getElementById('dropZoneContent');
                 const tempDiv = document.createElement('div'); tempDiv.innerText = file.name; const safeFileName = tempDiv.innerHTML;
-                dz.innerHTML = '<div style="font-size: 1.2em; margin-bottom: 10px; color:var(--accent); font-weight:bold;">Uploading: ' + safeFileName + '...</div>';
+                dz.innerHTML = '<div style="font-size: 1.2em; margin-bottom: 10px; color:var(--accent); font-weight:bold; display: flex; align-items: center; justify-content: center;"><div class="inline-spinner"></div>Uploading: ' + safeFileName + '...</div>';
                 document.getElementById('dropZone').style.borderColor = 'var(--success)';
 
                 const formData = new FormData();
@@ -2365,6 +2366,7 @@ class WebServer(
                         const msg = await res.text();
                         notify('Error: ' + msg, 'error');
                         loadKeyboxes();
+                        resetDropZone();
                         return;
                     }
                     dz.innerHTML = '<div style="font-size: 1.5em; margin-bottom: 10px; color:var(--success); font-weight:bold;">OK - ' + safeFileName + '</div>';
@@ -2375,11 +2377,10 @@ class WebServer(
                         if (body.keybox_count !== undefined) {
                             document.getElementById('keyboxStatus').innerText = body.keybox_count + ' Keys Loaded';
                         }
-                    } catch(e) { console.error(e); notify('Error: ' + e.message, 'error'); return; }
+                    } catch(e) { console.error(e); notify('Error: ' + e.message, 'error'); resetDropZone(); return; }
                     loadKeyInfo();
-                } catch(e) { notify('Error: ' + e.message, 'error'); return; } finally {
-                    resetDropZone();
-                }
+                    setTimeout(resetDropZone, 3000);
+                } catch(e) { notify('Error: ' + e.message, 'error'); resetDropZone(); return; }
             }
         }
 
