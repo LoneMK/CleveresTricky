@@ -143,7 +143,7 @@ class WebServerPaletteTest {
         // 2. Verify processFile updates content
         assertTrue("processFile should update dropZoneContent",
             html.contains("const dz = document.getElementById('dropZoneContent');") &&
-            html.contains("dz.innerHTML = '<div style=\"font-size: 1.2em; margin-bottom: 10px; color:var(--accent); font-weight:bold;\">Uploading: ' + safeFileName + '...</div>';")
+            html.contains("dz.innerHTML = '<div style=\"font-size: 1.2em; margin-bottom: 10px; color:var(--accent); font-weight:bold; display: flex; align-items: center; justify-content: center;\"><div class=\"inline-spinner\"></div>Uploading: ' + safeFileName + '...</div>';")
         )
 
         // 3. Verify processFile updates border color
