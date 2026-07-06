@@ -42,7 +42,7 @@ Unlike traditional modules that apply static patches, CleveresTricky runs an alw
 |--------------|-----|
 | **Play Integrity DEVICE/STRONG** | Intercepts keystore at the Binder level and injects valid attestation chains |
 | **KeyMint 4.0 attestation** | Full support for the latest hardware attestation protocol |
-| **RKP (Remote Key Provisioning)** | Built-in local proxy generates RFC-compliant COSE/CBOR proofs signed with rotating secrets |
+| **RKP (Remote Key Provisioning) - Beta** | Optional experimental mode (default OFF) with local proxy-generated COSE/CBOR proofs |
 | **Device Recall Protection** | Neutralizes Google's persistent 3-bit device recall by randomizing all device identity signals (see below) |
 | **Multi-keybox rotation** | Maintains a pool of keyboxes and rotates through them automatically (round-robin) |
 | **Encrypted keyboxes (.cbox)** | AES-256-GCM containers with hardware-backed key storage |
@@ -120,7 +120,7 @@ The module detects your chipset and uses the correct provisioning binary automat
 1. **Install** -- Flash the module ZIP from KernelSU/APatch manager and reboot
 2. **Open WebUI** -- Navigate to `http://localhost:5623` in any browser (Configuration changes take effect immediately. No reboot needed)
 3. **Add Keybox** *(optional)* -- Upload via WebUI or place at `/data/adb/cleverestricky/keybox.xml`
-4. **Enable RKP** *(for STRONG integrity)* -- Toggle in WebUI or `touch /data/adb/cleverestricky/rkp_bypass`
+4. **(Optional) Enable RKP Beta** -- Toggle in WebUI or `touch /data/adb/cleverestricky/rkp_bypass` when explicitly testing the beta path
 5. **Set Targets** *(optional)* -- Add package names in WebUI or edit `/data/adb/cleverestricky/target.txt`
 
 
@@ -263,7 +263,7 @@ today
 
 ## Advanced
 
-### RKP Spoofing (STRONG Integrity)
+### RKP Beta Mode (Optional)
 
 ```bash
 # Enable
@@ -274,6 +274,8 @@ rm /data/adb/cleverestricky/rkp_bypass
 ```
 
 The module runs a **Local RKP Proxy** that generates valid COSE/CBOR structures signed by a rotating root secret. The cryptographic identity mutates every 24 hours to prevent fingerprint-based banning.
+
+> RKP is intentionally **disabled by default**. Built-in profiles keep it off unless you manually enable it for beta testing.
 
 ### AutoPIF - Automatic Fingerprint Updates
 

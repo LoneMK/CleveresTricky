@@ -17,6 +17,8 @@ internal class KeyCache<K, V>(private val maxEntries: Int) {
 
     fun values(): Collection<V> = map.values
 
+    fun snapshotValues(): List<V> = synchronized(map) { map.values.toList() }
+
     fun clear() {
         map.clear()
     }
