@@ -1798,7 +1798,7 @@ dependencies = [
  "android_logger",
  "libc",
  "log",
- "rand 0.8.6",
+ "rand 0.10.2",
  "rand_distr",
 ]
 
