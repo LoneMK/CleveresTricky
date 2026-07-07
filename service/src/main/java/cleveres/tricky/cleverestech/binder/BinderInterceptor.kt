@@ -145,18 +145,17 @@ open class BinderInterceptor : Binder() {
                         theReply.setDataPosition(0)
                     }
                     localResult = onPostTransact(target, theCode, theFlags, callingUid, callingPid, theData, theReply, resultCode)
-                    localResult
-                } finally {
-                    // Only recycle if they are not being passed down in an Override result
-                    if (localResult !is OverrideData || localResult.data !== theData) {
-                        theData.recycle()
-                    }
-                    if (theReply != null) {
-                        if (localResult !is OverrideReply || localResult.reply !== theReply) {
-                            theReply.recycle()
-                        }
-                    }
+                } catch (t: Throwable) {
+                    Logger.e("Exception in onPostTransact", t)
+                    localResult = Skip
                 }
+                if (localResult !is OverrideData || localResult.data !== theData) {
+                    theData.recycle()
+                }
+                if (theReply != null && (localResult !is OverrideReply || localResult.reply !== theReply)) {
+                    theReply.recycle()
+                }
+                localResult
             }
             3 -> { // INTERCEPTOR_REPLACED
                 onInterceptorReplaced()
