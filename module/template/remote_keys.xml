@@ -2,7 +2,7 @@
 <!--
     Remote Key Provisioning Configuration Template
     
-    This file configures remote key spoofing for MEETS_STRONG_INTEGRITY.
+    This file configures optional beta RKP key overrides.
     Place at: /data/adb/cleverestricky/remote_keys.xml
     
     Note: This is an optional configuration. When not present, the module

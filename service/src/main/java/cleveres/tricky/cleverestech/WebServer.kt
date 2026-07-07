@@ -1533,7 +1533,7 @@ class WebServer(
                 <div id="status_global" style="font-weight: bold; color: var(--danger); margin-top: 5px; background: rgba(239, 68, 68, 0.1); padding: 5px; border-radius: 4px;">INACTIVE</div>
             </div>
             <div style="flex: 1; min-width: 120px; padding: 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid var(--border); text-align: center;">
-                <div style="font-size: 0.8em; color: #888; text-transform: uppercase;">RKP Bypass</div>
+                <div style="font-size: 0.8em; color: #888; text-transform: uppercase;">RKP Beta</div>
                 <div id="status_rkp" style="font-weight: bold; color: var(--danger); margin-top: 5px; background: rgba(239, 68, 68, 0.1); padding: 5px; border-radius: 4px;">INACTIVE</div>
             </div>
             <div style="flex: 1; min-width: 120px; padding: 15px; border-radius: 8px; background: #1a1a1a; border: 1px solid var(--border); text-align: center;">
@@ -1560,7 +1560,8 @@ class WebServer(
             <div class="row"><label for="global_mode">Global Mode</label><input type="checkbox" class="toggle" id="global_mode" onchange="toggle('global_mode')"></div>
             <div class="row"><label for="init_rc_injection">Init.rc Injection</label><input type="checkbox" class="toggle" id="init_rc_injection" onchange="toggle('init_rc_injection')"></div>
             <div class="row"><label for="tee_broken_mode">TEE Broken Mode</label><input type="checkbox" class="toggle" id="tee_broken_mode" onchange="toggle('tee_broken_mode')"></div>
-            <div class="row"><label for="rkp_bypass">RKP Bypass (Strong)</label><input type="checkbox" class="toggle" id="rkp_bypass" onchange="toggle('rkp_bypass')"></div>
+            <div class="row"><label for="rkp_bypass">RKP Beta (Experimental)</label><input type="checkbox" class="toggle" id="rkp_bypass" onchange="toggle('rkp_bypass')"></div>
+            <div style="font-size:0.8em; color:#888; margin-top:5px;">RKP is optional beta and stays disabled by default.</div>
             <div class="row"><label for="auto_beta_fetch">Auto Beta Fetch</label><input type="checkbox" class="toggle" id="auto_beta_fetch" onchange="toggle('auto_beta_fetch')"></div>
             <div class="row"><label for="auto_keybox_check">Auto Keybox Check</label><input type="checkbox" class="toggle" id="auto_keybox_check" onchange="toggle('auto_keybox_check')"></div>
             <div class="row"><label for="auto_patch_update">Auto Patch Update</label><input type="checkbox" class="toggle" id="auto_patch_update" onchange="toggle('auto_patch_update')"></div>
@@ -2941,9 +2942,9 @@ class WebServer(
         }
 
         function determineActiveProfile(data) {
-            const isGod = data.global_mode && data.rkp_bypass && !data.tee_broken_mode && data.random_on_boot && data.hide_sensitive_props && data.drm_fix && data.auto_patch_update && data.spoof_location;
-            const isDaily = !data.global_mode && data.rkp_bypass && !data.tee_broken_mode && !data.random_on_boot && data.hide_sensitive_props && !data.drm_fix && data.auto_patch_update;
-            const isMinimal = !data.global_mode && data.rkp_bypass && !data.tee_broken_mode && !data.random_on_boot && !data.hide_sensitive_props && !data.drm_fix && !data.auto_patch_update && !data.spoof_location;
+            const isGod = data.global_mode && !data.tee_broken_mode && data.random_on_boot && data.hide_sensitive_props && data.drm_fix && data.auto_patch_update && data.spoof_location;
+            const isDaily = !data.global_mode && !data.tee_broken_mode && !data.random_on_boot && data.hide_sensitive_props && !data.drm_fix && data.auto_patch_update;
+            const isMinimal = !data.global_mode && !data.tee_broken_mode && !data.random_on_boot && !data.hide_sensitive_props && !data.drm_fix && !data.auto_patch_update && !data.spoof_location;
 
             const select = document.getElementById('profileSelect');
             if (!select) return;
@@ -3219,7 +3220,7 @@ class WebServer(
 
             const features = [
                 { id: 'global_mode', name: 'Global Mode', ram: '~5 MB', cpu: 'High (All Apps)', sec: 'Medium', desc: 'Hooks all apps. Disabling saves RAM but breaks global spoofing.' },
-                { id: 'rkp_bypass', name: 'RKP Bypass', ram: '~2 MB', cpu: 'Medium (Crypto)', sec: 'Critical', desc: 'Required for Strong Integrity. Do not disable unless necessary.' },
+                { id: 'rkp_bypass', name: 'RKP Beta', ram: '~2 MB', cpu: 'Medium (Crypto)', sec: 'High', desc: 'Experimental RKP compatibility mode. Disabled by default.' },
                 { id: 'tee_broken_mode', name: 'TEE Broken Mode', ram: 'Negligible', cpu: 'Low', sec: 'Low', desc: 'Forces software keystore behavior.' },
                 { id: 'id_attest_provision', name: 'ID Attestation Provision', ram: 'Negligible', cpu: 'Low', sec: 'Moderate', desc: 'Provisions ID attestation directly to TEE. Fixes CSR Code 20 without Keybox.' },
                 { id: 'keybox_storage', name: 'Keybox Storage', ram: '~' + keyboxRam + ' MB', cpu: 'Low', sec: 'Medium', desc: data.keybox_count + ' keyboxes loaded. More keys = more RAM.' },

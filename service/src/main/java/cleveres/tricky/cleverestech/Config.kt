@@ -356,9 +356,9 @@ object Config {
     private fun updateRkpBypass(f: File?) {
         val previousValue = isRkpBypass
         isRkpBypass = f?.exists() == true
-        Logger.i("RKP bypass is ${if (isRkpBypass) "enabled" else "disabled"} (file=${f?.absolutePath}, exists=${f?.exists()})")
+        Logger.i("RKP beta mode is ${if (isRkpBypass) "enabled" else "disabled"} (default=disabled, file=${f?.absolutePath}, exists=${f?.exists()})")
         if (previousValue != isRkpBypass) {
-            Logger.i("RKP bypass state changed: $previousValue -> $isRkpBypass")
+            Logger.i("RKP beta mode state changed: $previousValue -> $isRkpBypass")
             cleveres.tricky.cleverestech.SecurityLevelInterceptor.clearCache()
         }
     }
@@ -879,7 +879,7 @@ object Config {
         when (profileName.lowercase()) {
             "godprofile" -> {
                 SecureFile.touch(File(root, GLOBAL_MODE_FILE), 384)
-                SecureFile.touch(File(root, RKP_BYPASS_FILE), 384)
+                File(root, RKP_BYPASS_FILE).delete()
                 File(root, TEE_BROKEN_MODE_FILE).delete()
                 SecureFile.touch(File(root, RANDOM_ON_BOOT_FILE), 384)
                 SecureFile.touch(File(root, HIDE_SENSITIVE_PROPS_FILE), 384)
@@ -894,7 +894,7 @@ object Config {
             }
             "dailyuse" -> {
                 File(root, GLOBAL_MODE_FILE).delete()
-                SecureFile.touch(File(root, RKP_BYPASS_FILE), 384)
+                File(root, RKP_BYPASS_FILE).delete()
                 File(root, TEE_BROKEN_MODE_FILE).delete()
                 File(root, RANDOM_ON_BOOT_FILE).delete()
                 SecureFile.touch(File(root, HIDE_SENSITIVE_PROPS_FILE), 384)
@@ -906,7 +906,7 @@ object Config {
             }
             "minimal" -> {
                 File(root, GLOBAL_MODE_FILE).delete()
-                SecureFile.touch(File(root, RKP_BYPASS_FILE), 384)
+                File(root, RKP_BYPASS_FILE).delete()
                 File(root, TEE_BROKEN_MODE_FILE).delete()
                 File(root, RANDOM_ON_BOOT_FILE).delete()
                 File(root, HIDE_SENSITIVE_PROPS_FILE).delete()
@@ -918,7 +918,7 @@ object Config {
             }
             "default" -> {
                 File(root, GLOBAL_MODE_FILE).delete()
-                SecureFile.touch(File(root, RKP_BYPASS_FILE), 384)
+                File(root, RKP_BYPASS_FILE).delete()
                 File(root, TEE_BROKEN_MODE_FILE).delete()
                 File(root, RANDOM_ON_BOOT_FILE).delete()
                 File(root, HIDE_SENSITIVE_PROPS_FILE).delete()

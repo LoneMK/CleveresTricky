@@ -245,16 +245,12 @@ class RkpInterceptor(
     }
 
     private fun resolveDeviceInfo(keysToSign: Array<MacedPublicKey>?, uid: Int): ByteArray {
+        val cachedEntries = keyPairCache.snapshotValues()
         if (keysToSign != null) {
             for (k in keysToSign) {
                 if (k.macedKey == null) continue
-                // KeyCache values() added in previous step
-                val cached = try {
-                    keyPairCache.values().find {
-                        java.util.Arrays.equals(it.macedPublicKey, k.macedKey)
-                    }
-                } catch (_: ConcurrentModificationException) {
-                    null
+                val cached = cachedEntries.find {
+                    java.util.Arrays.equals(it.macedPublicKey, k.macedKey)
                 }
                 if (cached?.deviceInfo != null) return cached.deviceInfo
             }

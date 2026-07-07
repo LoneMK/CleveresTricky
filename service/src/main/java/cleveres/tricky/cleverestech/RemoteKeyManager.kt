@@ -20,7 +20,9 @@ object RemoteKeyManager {
         val deviceInfo: ByteArray? // Pre-calculated CBOR DeviceInfo
     )
 
+    @Volatile
     private var keys: List<RkpKey> = emptyList()
+    @Volatile
     private var hardwareInfoOverride: RpcHardwareInfo? = null
 
     fun update(f: File?) = runCatching {
@@ -115,9 +117,10 @@ object RemoteKeyManager {
     }
 
     fun getKeyPair(): RkpKey? {
-        if (keys.isEmpty()) return null
+        val currentKeys = keys
+        if (currentKeys.isEmpty()) return null
         // Random rotation for smart evasion (SecureRandom for unpredictability)
-        return keys[SecureRandom().nextInt(keys.size)]
+        return currentKeys[SecureRandom().nextInt(currentKeys.size)]
     }
 
     fun getHardwareInfo(): RpcHardwareInfo? {

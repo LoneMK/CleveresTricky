@@ -297,6 +297,23 @@ class ActionTest {
         assertFalse(File(configDir, "spoof_props").exists())
     }
 
+    @Test
+    fun testProfilesKeepRkpBetaDisabledByDefault() {
+        assertFalse(getConfig().getBoolean("rkp_bypass"))
+
+        val profiles = listOf("GodProfile", "DailyUse", "Minimal", "Default")
+        profiles.forEach { profile ->
+            assertEquals(200, postForm("/api/apply_profile", mapOf("profile" to profile)).first)
+
+            waitUntil("profile $profile to apply without enabling rkp") {
+                !File(configDir, "apply_profile").exists() && !File(configDir, "rkp_bypass").exists()
+            }
+
+            val config = getConfig()
+            assertFalse("rkp_bypass must stay disabled for profile=$profile", config.getBoolean("rkp_bypass"))
+        }
+    }
+
     private fun post(path: String): Pair<Int, String> {
         val url = URL("http://localhost:${server.listeningPort}$path?token=${server.token}")
         val conn = url.openConnection() as HttpURLConnection
