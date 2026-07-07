@@ -214,7 +214,7 @@ class RkpInterceptor(
                 p.writeByteArray(response)
                 val deviceInfo = DeviceInfo(deviceInfoBytes)
                 p.writeTypedObject(deviceInfo, 0)
-                val protectedData = ProtectedData(createProtectedData())
+                val protectedData = ProtectedData(createProtectedDataNatively())
                 p.writeTypedObject(protectedData, 0)
             }
             
@@ -284,101 +284,5 @@ class RkpInterceptor(
 
     private external fun createProtectedDataNatively(): ByteArray
 
-    private fun createProtectedData(): ByteArray {
-        return try {
-            // 1. Ephemeral key pair for ECDH
-            val ephemeralKeyPair = cleveres.tricky.cleverestech.util.CryptoUtils.generateX25519KeyPair()
 
-            // Dummy EEK Public Key (Google's prod EEK is usually passed or fetched)
-            val dummyEekPair = cleveres.tricky.cleverestech.util.CryptoUtils.generateX25519KeyPair()
-            val eekPublicKey = dummyEekPair.public.encoded
-
-            // 2. ECDH Shared Secret
-            val sharedSecret = cleveres.tricky.cleverestech.util.CryptoUtils.ecdhDeriveKey(ephemeralKeyPair.private, eekPublicKey)
-
-            // 3. HKDF-SHA-256 to derive AES-256-GCM CEK (32 bytes)
-            val salt = ByteArray(0)
-            val info = "EekCek".toByteArray(Charsets.UTF_8)
-            val cek = cleveres.tricky.cleverestech.util.CryptoUtils.hkdfSha256(sharedSecret, salt, info, 32)
-
-            // 4. Create DICE Chain (Degenerate DICE)
-            val udsKeyPair = cleveres.tricky.cleverestech.util.CryptoUtils.generateEd25519KeyPair()
-            val udsPubCose = createCoseKeyMap(udsKeyPair.public)
-
-            val diceChain = java.util.ArrayList<Any>()
-            diceChain.add(cleveres.tricky.cleverestech.util.CborEncoder.encode(udsPubCose))
-            val diceChainBytes = cleveres.tricky.cleverestech.util.CborEncoder.encode(diceChain)
-
-            val payloadArray = java.util.ArrayList<Any>()
-            payloadArray.add(diceChainBytes)
-            val payloadBytes = cleveres.tricky.cleverestech.util.CborEncoder.encode(payloadArray)
-
-            // 5. AES-GCM Encryption
-            val iv = ByteArray(12)
-            java.security.SecureRandom().nextBytes(iv)
-
-            val protectedMap = java.util.HashMap<Int, Any>()
-            protectedMap[1] = 3 // A256GCM
-            val protHeaderBytes = cleveres.tricky.cleverestech.util.CborEncoder.encode(protectedMap)
-
-            val encStructure = java.util.ArrayList<Any>()
-            encStructure.add("Encrypt")
-            encStructure.add(protHeaderBytes)
-            encStructure.add(ByteArray(0))
-            val aadBytes = cleveres.tricky.cleverestech.util.CborEncoder.encode(encStructure)
-
-            val ciphertext = cleveres.tricky.cleverestech.util.CryptoUtils.aesGcmEncrypt(cek, iv, aadBytes, payloadBytes)
-
-            // 6. Build COSE_Encrypt0
-            val unprotectedMap = java.util.HashMap<Any, Any>()
-            unprotectedMap[5] = iv
-            
-            val coseEncrypt = java.util.ArrayList<Any>()
-            coseEncrypt.add(protHeaderBytes)
-            coseEncrypt.add(unprotectedMap)
-            coseEncrypt.add(ciphertext)
-
-            val recipients = java.util.ArrayList<Any>()
-            val recipientUnprotected = java.util.HashMap<Any, Any>()
-            recipientUnprotected[-1] = createCoseKeyMap(ephemeralKeyPair.public)
-
-            val recipient = java.util.ArrayList<Any>()
-            recipient.add(ByteArray(0))
-            recipient.add(recipientUnprotected)
-            recipient.add(ByteArray(0))
-            recipients.add(recipient)
-            
-            coseEncrypt.add(recipients)
-
-            cleveres.tricky.cleverestech.util.CborEncoder.encode(coseEncrypt)
-        } catch (e: Throwable) {
-            Logger.e("failed to create actual cryptographic protected data", e)
-            ByteArray(0)
-        }
-    }
-
-    private fun createCoseKeyMap(publicKey: java.security.PublicKey): Map<Any, Any> {
-        val map = mutableMapOf<Any, Any>()
-        try {
-            val encoded = publicKey.encoded
-            if (publicKey.algorithm == "Ed25519") {
-                map.put(1, 1)
-                map.put(3, -8)
-                map.put(-1, 6)
-                val raw = ByteArray(32)
-                System.arraycopy(encoded, encoded.size - 32, raw, 0, 32)
-                map.put(-2, raw)
-            } else if (publicKey.algorithm == "X25519") {
-                map.put(1, 1)
-                map.put(3, -25)
-                map.put(-1, 4)
-                val raw = ByteArray(32)
-                System.arraycopy(encoded, encoded.size - 32, raw, 0, 32)
-                map.put(-2, raw)
-            }
-        } catch (e: Exception) {
-            Logger.e("Failed to create COSE key map", e)
-        }
-        return map
-    }
 }
