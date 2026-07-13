@@ -1,6 +1,6 @@
 [versions]
 agp = "9.2.1"
-bcpkix-jdk18on = "1.84"
+bcpkix-jdk18on = "1.85"
 kotlin = "2.4.0"
 annotation = "1.10.0"
 junit = "4.13.2"
