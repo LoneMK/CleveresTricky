@@ -392,7 +392,7 @@ To ensure the long-term viability and unbreakability of this module, AI Agents c
 
 ## Community
 
-**Telegram:** [Cleverestech Group](https://t.me/cleverestech)
+**Telegram:** [Cleverestech Group](https://telegram.me/cleverestech)
 
 ## Support
 
